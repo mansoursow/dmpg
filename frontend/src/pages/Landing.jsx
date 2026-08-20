@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  Package, MapPin, Shield, Phone, Copy, CheckCheck,
+  Package, MapPin, Phone, Copy, CheckCheck,
   Calculator, ArrowRight, Truck, Star, Users, CheckCircle2,
-  MessageCircle, PhoneCall, AlertTriangle
+  MessageCircle, PhoneCall, AlertTriangle, UserPlus
 } from 'lucide-react';
 import styles from './Landing.module.css';
 
@@ -41,12 +41,12 @@ const waLien = (msg) => `https://wa.me/${SUPPORT.wa}?text=${encodeURIComponent(m
 
 const ADDRESS = {
   'Nom': 'Votre Prénom Nom – GP-XXXX',
-  'Complément': 'Magasin Mr Diop',
-  'Adresse': '14 Boulevard de la Chapelle',
+  'Complément': 'Magasin Mr ...',
+  'Adresse': '14 Boulevard .......',
   'Code postal': '75018',
   'Ville': 'Paris',
   'Pays': 'France',
-  'Tél': '0758509931',
+  'Tél': '075850....',
 };
 
 export default function Landing() {
@@ -265,13 +265,6 @@ export default function Landing() {
                 pas identifier votre colis à son arrivée.
               </span>
             </div>
-            <div className={styles.addressAlert}>
-              <Shield size={20}/>
-              <span>
-                Remplacez <strong>Votre Prénom Nom</strong> par votre vrai nom et <strong>GP-XXXX</strong> par
-                votre ID client — vous l'obtenez immédiatement à l'inscription.
-              </span>
-            </div>
             {Object.entries(ADDRESS).map(([k, v]) => (
               <div key={k} className={styles.addressRow}>
                 <div className={styles.addressLabel}>{k}</div>
@@ -281,14 +274,20 @@ export default function Landing() {
                 </button>
               </div>
             ))}
-            <button
-              className={`btn btn-primary ${styles.copyAll}`}
-              onClick={() => copyField('all', Object.entries(ADDRESS).map(([k, v]) => `${k}: ${v}`).join('\n'))}
-            >
-              {copied === 'all'
-                ? <><CheckCheck size={18}/> Adresse copiée</>
-                : <><Copy size={18}/> Copier toute l'adresse</>}
-            </button>
+            <div className={styles.addressCta}>
+              <span className={styles.addressCtaIcon}><UserPlus size={24}/></span>
+              <div className={styles.addressCtaTexte}>
+                <strong>Il manque votre identifiant</strong>
+                <p>
+                  Le <code>GP-XXXX</code> ci-dessus est un exemple. Sans votre identifiant
+                  personnel sur le colis, nous ne pouvons pas le rattacher à votre compte
+                  à son arrivée à Paris.
+                </p>
+              </div>
+              <Link to="/login?mode=register" className={`btn btn-primary ${styles.addressCtaBtn}`}>
+                Créer mon compte gratuit <ArrowRight size={18}/>
+              </Link>
+            </div>
           </div>
           </div>
         </div>

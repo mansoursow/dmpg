@@ -305,7 +305,31 @@
   display: flex; align-items: center;
 }
 .copyBtn:hover { background: var(--accent-pale); color: var(--accent); }
-.copyAll { margin-top: 28px; width: 100%; }
+/* Invitation à s'inscrire, à la place du bouton de copie :
+   l'adresse affichée ici est incomplète sans identifiant client. */
+.addressCta {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 18px;
+  background: var(--ink); border-radius: var(--radius);
+  padding: 28px; margin-top: 28px;
+}
+.addressCtaIcon {
+  width: 52px; height: 52px; border-radius: var(--radius-sm); flex-shrink: 0;
+  background: rgba(255,255,255,.1); color: var(--accent-2);
+  display: flex; align-items: center; justify-content: center;
+}
+.addressCtaTexte strong {
+  display: block; font-size: 20px; font-weight: 700; color: #fff;
+  letter-spacing: -0.02em; margin-bottom: 8px;
+}
+.addressCtaTexte p {
+  font-size: 17px; font-weight: 400; color: rgba(255,255,255,.66); line-height: 1.7;
+}
+.addressCtaTexte code {
+  font-family: ui-monospace, SFMono-Regular, monospace;
+  font-size: 16px; color: var(--accent-2);
+  background: rgba(255,255,255,.08); padding: 2px 7px; border-radius: 5px;
+}
+.addressCtaBtn { width: 100%; justify-content: center; }
 
 /* ── SUIVI PUBLIC ── */
 .trackWrap { max-width: 560px; margin: 0 auto; }
