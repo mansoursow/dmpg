@@ -1,0 +1,251 @@
+:root {
+  /* ── Palette ──────────────────────────────────────────────
+     Encre indigo + accent orange. Aplats uniquement, zéro gradient. */
+  --ink:         #1E193D;
+  --ink-2:       #2A2450;
+  --ink-3:       #151132;
+  --accent:      #EE7630;
+  --accent-2:    #FF975C;
+  --accent-pale: #FFF1E8;
+  --muted:       #7A7B98;
+  --line:        #E6E8F2;
+  --surface:     #FFFFFF;
+  --surface-2:   #F7F9FD;
+  --surface-3:   #F2F3F9;
+
+  /* Surfaces chaudes — réservées à l'espace connecté (dashboard).
+     Le site public reste en gris-bleu froid, comme chez Afrety. */
+  --warm:        #FDF8F4;
+  --warm-line:   #EFE6DD;
+  --tint-orange: #FDF1E9;
+  --tint-green:  #DFF6E9;
+
+  /* Alias rétro-compatibles : les modules CSS existants héritent
+     de la nouvelle palette sans être réécrits ligne par ligne. */
+  --blue:        var(--ink);
+  --blue-light:  var(--ink-2);
+  --blue-dark:   #191439;
+  --blue-xdark:  var(--ink-3);
+  --orange:      var(--accent);
+  --orange-light:var(--accent-2);
+  --orange-pale: var(--accent-pale);
+  --white:       #FFFFFF;
+  --bg:          var(--surface-2);
+  --bg2:         var(--surface-3);
+  --text:        var(--ink);
+  --text-light:  var(--muted);
+  --border:      var(--line);
+
+  /* Statuts */
+  --green:     #12855A;  --green-bg:  #CDFFE2;
+  --red:       #C4384A;  --red-bg:    #FFD6D6;
+  --yellow:    #B26B00;  --yellow-bg: #FFEDD0;
+
+  /* Ombres — quasi invisibles. La hiérarchie passe par
+     les bordures et les fonds, pas par l'élévation. */
+  --shadow-sm: 0 1px 2px rgba(30,25,61,.04);
+  --shadow:    0 4px 24px rgba(30,25,61,.06);
+  --shadow-lg: 0 12px 40px rgba(30,25,61,.10);
+
+  /* Rayons */
+  --radius:    16px;
+  --radius-sm: 8px;
+  --radius-lg: 28px;
+  --radius-pill: 99px;
+
+  /* Rythme vertical des sections */
+  --section-y: 120px;
+  --container: 1360px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 17px;
+  font-weight: 500;
+  line-height: 1.75;
+  background: var(--surface);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
+}
+
+/* ── Typographie ──────────────────────────────────────────
+   Graisse plafonnée à 700, interlettrage négatif sur les titres. */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.2;
+  color: var(--ink);
+}
+h1 { font-size: clamp(40px, 5.5vw, 64px); letter-spacing: -0.04em; line-height: 1.15; }
+h2 { font-size: clamp(30px, 4vw, 44px); line-height: 1.27; }
+h3 { font-size: 20px; letter-spacing: -0.01em; }
+
+p { line-height: 1.75; }
+
+a { color: inherit; }
+
+/* ── Boutons ──────────────────────────────────────────────
+   Le CTA principal est un rectangle 8px. Le pill est réservé
+   aux actions secondaires. */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  gap: 10px; padding: 16px 28px; border-radius: var(--radius-sm);
+  font-size: 17px; font-weight: 600; cursor: pointer;
+  border: none; font-family: inherit; white-space: nowrap;
+  text-decoration: none; line-height: 1.2;
+  transition: background-color .18s ease, color .18s ease, border-color .18s ease;
+}
+.btn-primary   { background: var(--accent); color: #fff; }
+.btn-primary:hover { background: var(--accent-2); }
+.btn-blue      { background: var(--ink); color: #fff; }
+.btn-blue:hover{ background: var(--ink-2); }
+.btn-outline   { background: transparent; color: var(--ink); border: 1.5px solid var(--line); }
+.btn-outline:hover { border-color: var(--ink); }
+.btn-ghost     { background: var(--surface-3); color: var(--ink); }
+.btn-ghost:hover { background: var(--line); }
+.btn-sm        { padding: 11px 20px; font-size: 15px; border-radius: var(--radius-pill); }
+.btn-danger    { background: var(--red-bg); color: var(--red); }
+.btn-danger:hover { background: #ffc2c2; }
+.btn-success   { background: var(--green-bg); color: var(--green); }
+.btn:disabled  { opacity: .55; cursor: not-allowed; }
+
+/* ── Formulaires ── */
+.form-group { margin-bottom: 20px; }
+.form-group label {
+  display: block; font-size: 15px; font-weight: 600;
+  color: var(--ink); margin-bottom: 8px;
+  text-transform: none; letter-spacing: 0;
+}
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%; border: 1.5px solid var(--line);
+  border-radius: var(--radius-sm); padding: 15px 16px;
+  font-size: 17px; font-weight: 500; font-family: inherit; outline: none;
+  background: #fff; transition: border-color .18s; color: var(--ink);
+}
+.form-group input::placeholder,
+.form-group textarea::placeholder { color: var(--muted); font-weight: 400; }
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus { border-color: var(--ink); box-shadow: none; }
+.form-group textarea { resize: vertical; min-height: 96px; }
+
+/* Chrome peint un fond bleu sur les champs auto-remplis, ce qui casse
+   la charte. L'ombre interne repeint le fond sans toucher au texte. */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--ink);
+  -webkit-box-shadow: 0 0 0 1000px #fff inset;
+          box-shadow: 0 0 0 1000px #fff inset;
+  caret-color: var(--ink);
+  transition: background-color 9999s ease-out;
+}
+
+/* ── Carte ──
+   Bordure 1px plutôt qu'une ombre portée. */
+.card {
+  background: #fff; border-radius: var(--radius);
+  border: 1px solid var(--line); box-shadow: none; padding: 28px;
+}
+
+/* ── Pastilles de statut ── */
+.pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 14px; border-radius: var(--radius-pill);
+  font-size: 14px; font-weight: 600; white-space: nowrap; line-height: 1.4;
+}
+.pill-attente  { background: var(--surface-3); color: var(--muted); }
+.pill-recu     { background: var(--green-bg);  color: var(--green); }
+.pill-transit  { background: var(--yellow-bg); color: var(--yellow); }
+.pill-dakar    { background: #DCE4FF; color: #3B49B0; }
+.pill-livre    { background: #E8E2FF; color: #5B3FB8; }
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--line); border-radius: 4px; }
+
+/* ── Toast ── */
+.toast-wrap {
+  position: fixed; bottom: 24px; right: 24px; z-index: 9999;
+  display: flex; flex-direction: column; gap: 10px;
+}
+.toast {
+  background: var(--ink); color: #fff; padding: 15px 22px;
+  border-radius: var(--radius-sm); font-size: 16px; font-weight: 500;
+  box-shadow: var(--shadow-lg); animation: slideIn .28s ease;
+}
+.toast.success { background: var(--green); }
+.toast.error   { background: var(--red); }
+@keyframes slideIn { from { transform: translateX(110%); opacity: 0; } to { transform: none; opacity: 1; } }
+
+/* ── Loader ── */
+.loader {
+  display: flex; align-items: center; justify-content: center;
+  min-height: 60vh; flex-direction: column; gap: 16px; color: var(--muted);
+}
+.spinner {
+  width: 36px; height: 36px; border: 2.5px solid var(--line);
+  border-top-color: var(--accent); border-radius: 50%;
+  animation: spin .7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Tableau ──
+   En-tête clair sur fond pâle, pas de bandeau sombre. */
+.tbl-wrap { overflow-x: auto; border-radius: var(--radius); border: 1px solid var(--line); }
+table { width: 100%; border-collapse: collapse; background: #fff; font-size: 16px; }
+th {
+  background: var(--surface-2); color: var(--muted); padding: 14px 18px;
+  text-align: left; font-weight: 600; font-size: 14px; white-space: nowrap;
+  border-bottom: 1px solid var(--line);
+}
+td { border-bottom: 1px solid var(--line); padding: 16px 18px; vertical-align: middle; font-weight: 500; }
+tr:last-child td { border: none; }
+tr:hover td { background: var(--surface-2); }
+
+/* ── Modale ── */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(30,25,61,.45);
+  z-index: 200; display: flex; align-items: center; justify-content: center;
+  padding: 16px;
+}
+.modal-box {
+  background: #fff; border-radius: var(--radius-lg); padding: 36px;
+  width: 100%; max-width: 460px; box-shadow: var(--shadow-lg);
+  animation: modalIn .22s ease;
+}
+.modal-box h3 { font-size: 24px; color: var(--ink); margin-bottom: 22px; }
+@keyframes modalIn { from { transform: scale(.96); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+/* ── Séparateur ── */
+.divider { height: 1px; background: var(--line); margin: 24px 0; }
+
+/* ── Utilitaires ── */
+.text-orange { color: var(--accent); }
+.text-blue   { color: var(--ink); }
+.text-light  { color: var(--muted); }
+.fw-800      { font-weight: 700; }
+.mt-auto     { margin-top: auto; }
+.gap-8       { gap: 8px; }
+.flex        { display: flex; }
+.flex-center { display: flex; align-items: center; justify-content: center; }
+.flex-between{ display: flex; align-items: center; justify-content: space-between; }
+
+@media (max-width: 900px) {
+  :root { --section-y: 80px; }
+}
+@media (max-width: 640px) {
+  body { font-size: 16px; }
+  .card { padding: 22px; }
+  .modal-box { padding: 26px; }
+  .btn { padding: 14px 24px; font-size: 16px; }
+}

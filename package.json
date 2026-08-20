@@ -1,0 +1,17 @@
+{
+  "name": "dmgp-app",
+  "private": true,
+  "version": "1.0.0",
+  "description": "DMgp Logistique - envoi de colis Paris vers Dakar",
+  "scripts": {
+    "postinstall": "npm --prefix backend install && npm --prefix frontend install",
+    "build": "npm --prefix frontend run build",
+    "start": "node backend/server.js",
+    "dev:back": "npm --prefix backend run dev",
+    "dev:front": "npm --prefix frontend run dev",
+    "test:db": "node backend/test-migration.js"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

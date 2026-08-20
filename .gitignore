@@ -1,0 +1,23 @@
+node_modules/
+dist/
+.env
+.env.*
+!.env.example
+
+# Base locale PGlite : ne jamais versionner de donnees clients
+backend/.pgdata/
+backend/.pgdata-test/
+
+# Ancienne base lowdb, remplacee par Postgres
+backend/data/
+
+# Photos locales : en production elles vivent chez Cloudinary
+uploads/
+
+.DS_Store
+Thumbs.db
+*.log
+
+# Fichiers sources bruts (logos, photos avant traitement).
+# L app utilise les versions optimisees de frontend/public/.
+image/

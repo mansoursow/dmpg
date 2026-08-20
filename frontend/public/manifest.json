@@ -1,0 +1,20 @@
+{
+  "name": "DMgp – Paris Dakar Logistique",
+  "short_name": "DMgp",
+  "description": "Envoyez vos colis de Paris vers Dakar. 10€/kg.",
+  "start_url": "/app",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#1E193D",
+  "background_color": "#1E193D",
+  "lang": "fr",
+  "icons": [
+    { "src": "/logo.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/logo.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Déclarer un colis", "url": "/app", "icons": [{ "src": "/logo.png", "sizes": "96x96" }] },
+    { "name": "Suivi colis",       "url": "/app", "icons": [{ "src": "/logo.png", "sizes": "96x96" }] }
+  ]
+}

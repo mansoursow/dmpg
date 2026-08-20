@@ -1,0 +1,125 @@
+.page { display: flex; min-height: 100vh; }
+
+/* ── Colonne marque — aplat indigo, sans gradient ni halo ── */
+.left {
+  width: 480px; flex-shrink: 0;
+  background: var(--ink-3);
+  display: flex; align-items: center; justify-content: center; padding: 56px;
+  position: relative;
+}
+.leftContent { color: #fff; position: relative; max-width: 340px; }
+
+.back {
+  display: inline-flex; align-items: center; gap: 8px;
+  color: rgba(255,255,255,.55); text-decoration: none; font-size: 16px; font-weight: 400;
+  margin-bottom: 56px; transition: color .15s;
+}
+.back:hover { color: #fff; }
+
+.logo { height: 60px; width: auto; margin-bottom: 28px; filter: brightness(0) invert(1); }
+.leftContent h1 { font-size: 34px; font-weight: 700; letter-spacing: -0.03em; margin-bottom: 14px; color: #fff; }
+.leftContent p  { font-size: 18px; font-weight: 400; color: rgba(255,255,255,.6); line-height: 1.7; margin-bottom: 48px; }
+
+.leftStats {
+  display: flex; gap: 40px;
+  border-top: 1px solid rgba(255,255,255,.12);
+  padding-top: 28px; width: fit-content;
+}
+.leftStats div { text-align: left; }
+.leftStats strong { display: block; font-size: 26px; font-weight: 700; color: var(--accent); letter-spacing: -0.03em; }
+.leftStats span  { font-size: 15px; font-weight: 400; color: rgba(255,255,255,.5); }
+
+/* ── Colonne formulaire ── */
+.right {
+  flex: 1; display: flex; align-items: center; justify-content: center;
+  padding: 56px 24px; background: var(--surface-2);
+}
+
+.formBox {
+  width: 100%; max-width: 460px;
+  background: #fff; border: 1px solid var(--line);
+  border-radius: var(--radius-lg); padding: 44px;
+}
+
+.tabs {
+  display: flex; background: var(--surface-2); border-radius: var(--radius-sm);
+  padding: 5px; margin-bottom: 32px; gap: 5px;
+}
+.tabs button {
+  flex: 1; padding: 12px; border: none; border-radius: 6px; cursor: pointer;
+  font-size: 16px; font-weight: 500; font-family: inherit;
+  color: var(--muted); background: transparent; transition: all .18s;
+}
+.tabs button.active { background: #fff; color: var(--ink); font-weight: 600; box-shadow: var(--shadow-sm); }
+
+.formBox h2 { font-size: 30px; font-weight: 700; color: var(--ink); letter-spacing: -0.03em; margin-bottom: 10px; }
+.sub { font-size: 17px; font-weight: 400; color: var(--muted); margin-bottom: 32px; line-height: 1.6; }
+
+.row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+.inputWrap { position: relative; }
+.inputWrap input {
+  width: 100%; padding: 15px 16px;
+  border: 1.5px solid var(--line); border-radius: var(--radius-sm);
+  font-size: 17px; font-weight: 500; font-family: inherit; outline: none;
+  color: var(--ink); background: #fff; transition: border-color .18s;
+}
+/* `.form-group input` d'index.css a la meme specificite (0,1,1) que
+   `.inputWrap input` et gagne l'egalite par l'ordre de cascade. Ces deux
+   regles sont en (0,2,0) : elles reservent la place des icones pour de bon. */
+.inputWrap .field,
+.telChamp .field     { padding-left: 46px; }
+.inputWrap .fieldEye { padding-right: 48px; }
+
+.inputWrap input::placeholder { color: var(--muted); font-weight: 400; }
+
+/* ── Téléphone : indicatif pays + numéro ── */
+.telWrap { display: flex; gap: 10px; align-items: stretch; }
+.telWrap .telIndic {
+  flex: 0 0 116px; width: auto;
+  border: 1.5px solid var(--line); border-radius: var(--radius-sm);
+  padding: 15px 12px; font-size: 17px; font-weight: 500; font-family: inherit;
+  background: #fff; color: var(--ink); outline: none; cursor: pointer;
+  transition: border-color .18s;
+}
+.telWrap .telIndic:focus { border-color: var(--ink); }
+/* display:flex : l input epouse la hauteur du select (56px contre 54px sinon). */
+.telChamp { position: relative; flex: 1; min-width: 0; display: flex; }
+/* (0,2,0) : bat le `width: 100%` de `.form-group input` dans un conteneur flex. */
+.telWrap .telNum { width: 100%; min-width: 0; }
+
+.aide { font-size: 15px; font-weight: 400; color: var(--muted); margin-top: 8px; }
+.inputWrap input:focus { border-color: var(--ink); box-shadow: none; }
+.inputIcon {
+  position: absolute; left: 16px; top: 50%; transform: translateY(-50%);
+  color: var(--muted); pointer-events: none;
+}
+.eyeBtn {
+  position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+  background: none; border: none; cursor: pointer; color: var(--muted);
+  display: flex; align-items: center; padding: 4px;
+}
+.eyeBtn:hover { color: var(--ink); }
+
+.submitBtn { width: 100%; margin-top: 12px; justify-content: center; }
+
+.switchMode {
+  text-align: center; font-size: 16px; font-weight: 400; color: var(--muted); margin-top: 24px;
+}
+.switchMode button {
+  background: none; border: none; color: var(--accent); font-weight: 600;
+  cursor: pointer; font-size: 16px; font-family: inherit; text-decoration: none;
+}
+.switchMode button:hover { text-decoration: underline; }
+
+@media (max-width: 860px) {
+  .page { flex-direction: column; }
+  .left { width: 100%; min-height: auto; padding: 40px 24px; }
+  .leftContent { display: flex; flex-direction: column; align-items: center; text-align: center; max-width: none; }
+  .leftContent p { margin-bottom: 32px; }
+  .back { align-self: flex-start; margin-bottom: 32px; }
+  .leftStats { margin: 0 auto; }
+  .right { padding: 32px 20px; }
+  .formBox { padding: 30px 22px; }
+  .row { grid-template-columns: 1fr; }
+}
