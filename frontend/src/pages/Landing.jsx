@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Package, MapPin, Phone, Copy, CheckCheck,
-  Calculator, ArrowRight, Truck, Star, Users, CheckCircle2,
+  Calculator, ArrowRight, Truck, Users, CheckCircle2,
   MessageCircle, PhoneCall, AlertTriangle, UserPlus
 } from 'lucide-react';
 import styles from './Landing.module.css';
@@ -90,13 +90,17 @@ export default function Landing() {
       <section className={styles.hero}>
         <div className={styles.heroInner}>
           <div className={styles.heroContent}>
-            <div className={styles.heroBadge}>
-              <Star size={15} fill="currentColor"/> Un seul corridor, un seul tarif
-            </div>
             <h1>Vos colis de Paris<br/><span>à Dakar</span></h1>
             <p>
               Commandez sur Shein, Amazon ou H&amp;M avec notre adresse parisienne.
-              Nous regroupons et expédions vers Dakar. 10&nbsp;€/kg, suivi inclus.
+              Nous regroupons et expédions vos colis vers Dakar. 10&nbsp;€/kg, suivi inclus.
+            </p>
+            {/* Texte de fond : plus petit que l'accroche, pour garder la hiérarchie. */}
+            <p className={styles.heroPitch}>
+              L'esprit et la flexibilité du GP traditionnel, la précision d'un suivi moderne.
+              Pas de frais cachés, pas de démarches compliquées : nous réceptionnons vos
+              commandes à Paris et nos voyageurs GP de confiance les acheminent directement
+              à Dakar, avec le même soin que si c'était pour notre propre famille.
             </p>
             <div className={styles.heroBtns}>
               <Link to="/login?mode=register" className="btn btn-primary">
