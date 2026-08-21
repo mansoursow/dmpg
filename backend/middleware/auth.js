@@ -1,9 +1,10 @@
 const jwt = require('jsonwebtoken');
+const { EST_PROD } = require('../env');
 
 // Un secret écrit en dur dans le dépôt permet à quiconque y a accès de
 // forger un token administrateur. En production il devient obligatoire.
 const SECRET = process.env.JWT_SECRET || (() => {
-  if (process.env.NODE_ENV === 'production') {
+  if (EST_PROD) {
     throw new Error('JWT_SECRET est obligatoire en production.');
   }
   console.warn('⚠️  JWT_SECRET absent : secret de développement utilisé.');

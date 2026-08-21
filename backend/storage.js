@@ -9,6 +9,7 @@
 const path   = require('path');
 const fs     = require('fs');
 const multer = require('multer');
+const { EST_PROD } = require('./env');
 
 const CLOUDINARY_ACTIF = Boolean(
   process.env.CLOUDINARY_CLOUD_NAME &&
@@ -16,7 +17,7 @@ const CLOUDINARY_ACTIF = Boolean(
   process.env.CLOUDINARY_API_SECRET
 );
 
-if (!CLOUDINARY_ACTIF && process.env.NODE_ENV === 'production') {
+if (!CLOUDINARY_ACTIF && EST_PROD) {
   throw new Error(
     'Cloudinary non configuré. Sans lui, les photos disparaissent à chaque ' +
     'redéploiement : renseignez CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY ' +

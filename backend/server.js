@@ -4,9 +4,10 @@ const cors    = require('cors');
 const path    = require('path');
 const fs      = require('fs');
 const db      = require('./db');
+const { EST_PROD } = require('./env');
 
 const app  = express();
-const PROD = process.env.NODE_ENV === 'production';
+const PROD = EST_PROD;
 
 app.set('trust proxy', 1);          // Railway / Render placent un proxy devant
 
@@ -50,6 +51,12 @@ app.use('/api/notifications', require('./routes/notifications'));
 
 // ── Frontend compilé ──
 const frontDist = path.join(__dirname, '..', 'frontend', 'dist');
+if (PROD && !fs.existsSync(frontDist)) {
+  console.warn(
+    '⚠️  frontend/dist absent : le build n\'a pas ete execute.\n' +
+    "   Build Command attendu : npm install && npm run build"
+  );
+}
 if (fs.existsSync(frontDist)) {
   app.use(express.static(frontDist));
   app.get(/^(?!\/api\/).*/, (_req, res) => res.sendFile(path.join(frontDist, 'index.html')));

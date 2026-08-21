@@ -12,6 +12,7 @@
  */
 const fs   = require('fs');
 const path = require('path');
+const { EST_PROD, PLATEFORME } = require('./env');
 
 const SCHEMA = fs.readFileSync(path.join(__dirname, 'schema.sql'), 'utf8');
 
@@ -33,6 +34,15 @@ function demarrer() {
       });
       _query = (sql, params) => pool.query(sql, params);
       console.log('🗄️  Postgres (DATABASE_URL)');
+    } else if (EST_PROD) {
+      // Sans cette garde, on tomberait sur PGlite — absent en production —
+      // et l'erreur serait un « module introuvable » incomprehensible.
+      throw new Error(
+        `DATABASE_URL est absent alors que l'application tourne sur ${PLATEFORME}.\n` +
+        `   Ajoutez un service PostgreSQL au projet : Railway injecte alors\n` +
+        `   DATABASE_URL automatiquement. Sans base, aucune donnee ne survivrait\n` +
+        `   a un redeploiement.`
+      );
     } else {
       const { PGlite } = require('@electric-sql/pglite');
       const dossier = path.join(__dirname, '.pgdata');
@@ -88,7 +98,7 @@ async function semerAdmin() {
   // et on l'affiche une seule fois ; en production la variable est exigée.
   let motDePasseFinal = motDePasse;
   if (!motDePasseFinal) {
-    if (process.env.NODE_ENV === 'production') {
+    if (EST_PROD) {
       throw new Error('ADMIN_PASSWORD est obligatoire au premier démarrage en production.');
     }
     motDePasseFinal = require('crypto').randomBytes(9).toString('base64url');
