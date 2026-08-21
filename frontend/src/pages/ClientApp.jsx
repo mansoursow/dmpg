@@ -5,7 +5,7 @@ import {
   LogOut, Bell, Upload, QrCode, ChevronDown, MapPin, Menu, X,
   SlidersHorizontal, RotateCw, Search, Plane, Clock, Truck,
   CheckCircle2, Globe, LifeBuoy, MessageCircle, PhoneCall, AlertTriangle,
-  Receipt, Barcode
+  Receipt, Barcode, Pencil, Trash2
 } from 'lucide-react';
 import QRCode from 'qrcode';
 import api from '../api';
@@ -381,6 +381,26 @@ function ExpeditionPanel({ colis, onRefresh }) {
   const [filter, setFilter] = useState('');
   const [qrColis, setQrColis] = useState(null);
   const [qrUrl, setQrUrl] = useState('');
+  const [aModifier, setAModifier]   = useState(null);
+  const [aSupprimer, setASupprimer] = useState(null);
+  const [enCours, setEnCours]       = useState(false);
+  const toast = useToast();
+
+  // Le backend refuse toute modification passe le stade « en attente » :
+  // l'interface applique la meme regle pour ne pas proposer l'impossible.
+  const modifiable = c => c.status === 'attente';
+
+  async function supprimer() {
+    setEnCours(true);
+    try {
+      await api.delete(`/colis/${aSupprimer.id}`);
+      toast(`Colis ${aSupprimer.ref} supprimé`, 'success');
+      setASupprimer(null);
+      onRefresh();
+    } catch (e) {
+      toast(e.response?.data?.error || 'Suppression impossible', 'error');
+    } finally { setEnCours(false); }
+  }
 
   const filtered = colis.filter(c => {
     if (filter && c.status !== filter) return false;
@@ -460,9 +480,25 @@ function ExpeditionPanel({ colis, onRefresh }) {
                   <td><span className="pill" style={{ background: s.bg, color: s.color }}>{s.label}</span></td>
                   <td>{c.poids ? `${(c.poids * 10).toFixed(0)} €` : '—'}</td>
                   <td>
-                    <button className={styles.rowBtn} onClick={() => showQR(c)} aria-label="QR code">
-                      <QrCode size={17}/>
-                    </button>
+                    <div className={styles.rowActions}>
+                      <button className={styles.rowBtn} onClick={() => showQR(c)}
+                              title="QR code" aria-label="QR code">
+                        <QrCode size={17}/>
+                      </button>
+                      {modifiable(c) && (
+                        <>
+                          <button className={styles.rowBtn} onClick={() => setAModifier(c)}
+                                  title="Modifier" aria-label="Modifier">
+                            <Pencil size={17}/>
+                          </button>
+                          <button className={`${styles.rowBtn} ${styles.rowBtnDanger}`}
+                                  onClick={() => setASupprimer(c)}
+                                  title="Supprimer" aria-label="Supprimer">
+                            <Trash2 size={17}/>
+                          </button>
+                        </>
+                      )}
+                    </div>
                   </td>
                 </tr>
               );
@@ -470,6 +506,39 @@ function ExpeditionPanel({ colis, onRefresh }) {
           </tbody>
         </table>
       </div>
+
+      {aModifier && (
+        <ModifierColis
+          colis={aModifier}
+          onFerme={() => setAModifier(null)}
+          onEnregistre={() => { setAModifier(null); onRefresh(); }}
+        />
+      )}
+
+      {aSupprimer && (
+        <div className="modal-overlay" onClick={() => !enCours && setASupprimer(null)}>
+          <div className="modal-box" onClick={e => e.stopPropagation()}>
+            <h3>Supprimer ce colis ?</h3>
+            <p style={{ fontSize: 17, color: 'var(--muted)', lineHeight: 1.7, marginBottom: 8 }}>
+              La déclaration <strong style={{ color: 'var(--ink)' }}>{aSupprimer.ref}</strong>
+              {aSupprimer.fournisseur ? ` (${aSupprimer.fournisseur})` : ''} sera définitivement
+              retirée de votre espace. Cette action est irréversible.
+            </p>
+            <p style={{ fontSize: 16, color: 'var(--muted)', marginBottom: 24 }}>
+              Si le colis a déjà été envoyé au dépôt, ne le supprimez pas : nous ne pourrions
+              plus le rattacher à votre compte à son arrivée.
+            </p>
+            <button className="btn btn-danger" style={{ width: '100%', justifyContent: 'center', marginBottom: 10 }}
+                    onClick={supprimer} disabled={enCours}>
+              {enCours ? 'Suppression…' : <><Trash2 size={18}/> Supprimer définitivement</>}
+            </button>
+            <button className="btn btn-ghost" style={{ width: '100%', justifyContent: 'center' }}
+                    onClick={() => setASupprimer(null)} disabled={enCours}>
+              Annuler
+            </button>
+          </div>
+        </div>
+      )}
 
       {qrColis && (
         <div className="modal-overlay" onClick={() => setQrColis(null)}>
@@ -497,6 +566,100 @@ function ExpeditionPanel({ colis, onRefresh }) {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+/* ════════════ MODIFIER UNE DÉCLARATION ════════════ */
+function ModifierColis({ colis, onFerme, onEnregistre }) {
+  const [form, setForm] = useState({
+    fournisseur:  colis.fournisseur  || '',
+    num_commande: colis.num_commande || '',
+    tracking_num: colis.tracking_num || '',
+    description:  colis.description  || '',
+    poids:        colis.poids ?? '',
+  });
+  const [enCours, setEnCours] = useState(false);
+  const toast = useToast();
+  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+
+  async function enregistrer(e) {
+    e.preventDefault();
+    if (!form.num_commande.trim()) { toast('Le numéro de commande est obligatoire', 'error'); return; }
+    setEnCours(true);
+    try {
+      await api.patch(`/colis/${colis.id}`, form);
+      toast(`Colis ${colis.ref} mis à jour`, 'success');
+      onEnregistre();
+    } catch (e) {
+      toast(e.response?.data?.error || 'Modification impossible', 'error');
+    } finally { setEnCours(false); }
+  }
+
+  return (
+    <div className="modal-overlay" onClick={() => !enCours && onFerme()}>
+      <div className="modal-box" onClick={e => e.stopPropagation()} style={{ maxWidth: 520 }}>
+        <h3>Modifier {colis.ref}</h3>
+
+        <form onSubmit={enregistrer}>
+          <div className="form-group">
+            <label>Fournisseur</label>
+            <div className={styles.fournisseurGrid}>
+              {FOURNISSEURS.map(f => (
+                <button key={f} type="button"
+                  className={`${styles.fBtn} ${form.fournisseur === f ? styles.fActive : ''}`}
+                  onClick={() => set('fournisseur', f)}
+                >{f}</button>
+              ))}
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label>Numéro de commande *</label>
+            <input
+              value={form.num_commande}
+              onChange={e => set('num_commande', e.target.value.toUpperCase())}
+              style={{ fontFamily: 'ui-monospace, SFMono-Regular, monospace' }}
+              required
+            />
+          </div>
+
+          <div className="form-group">
+            <label>Numéro de colis / suivi transporteur</label>
+            <input
+              value={form.tracking_num}
+              onChange={e => set('tracking_num', e.target.value.toUpperCase())}
+              style={{ fontFamily: 'ui-monospace, SFMono-Regular, monospace' }}
+            />
+          </div>
+
+          <div className="form-group">
+            <label>Description</label>
+            <textarea value={form.description} onChange={e => set('description', e.target.value)}/>
+          </div>
+
+          <div className="form-group">
+            <label>Poids estimé (kg)</label>
+            <input type="number" min="0.1" step="0.1" value={form.poids}
+                   onChange={e => set('poids', e.target.value)}/>
+            {form.poids > 0 && (
+              <p className={styles.champAide}>
+                Estimation : <strong style={{ color: 'var(--accent)' }}>{(form.poids * 10).toFixed(0)} €</strong>
+              </p>
+            )}
+          </div>
+
+          <button type="submit" className="btn btn-primary"
+                  style={{ width: '100%', justifyContent: 'center', marginBottom: 10 }} disabled={enCours}>
+            {enCours ? 'Enregistrement…' : 'Enregistrer les modifications'}
+          </button>
+          <button type="button" className="btn btn-ghost"
+                  style={{ width: '100%', justifyContent: 'center' }}
+                  onClick={onFerme} disabled={enCours}>
+            Annuler
+          </button>
+        </form>
+      </div>
     </div>
   );
 }

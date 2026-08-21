@@ -235,6 +235,8 @@
   cursor: pointer; color: var(--muted); display: inline-flex; transition: all .15s;
 }
 .rowBtn:hover { background: var(--tint-orange); color: var(--accent); }
+.rowActions { display: flex; gap: 6px; }
+.rowBtnDanger:hover { background: var(--red-bg); color: var(--red); }
 
 /* ── FORMULAIRE DE DÉCLARATION ── */
 .fournisseurGrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }

@@ -62,6 +62,68 @@ async function enregistrerPhoto(colisId, file) {
   return url;
 }
 
+/**
+ * Un colis n'est modifiable par son proprietaire que tant qu'il n'est pas
+ * arrive au depot. Une fois receptionne physiquement, le modifier ou le
+ * supprimer casserait le lien entre le carton et sa fiche : le client
+ * passe alors par le support.
+ */
+const MODIFIABLE = 'attente';
+
+async function chargerSiModifiable(req, res) {
+  const c = await db.row(`SELECT * FROM colis WHERE id = $1`, [parseInt(req.params.id, 10)]);
+  if (!c || c.client_id !== req.user.id) {
+    res.status(404).json({ error: 'Colis introuvable' });
+    return null;
+  }
+  if (c.status !== MODIFIABLE) {
+    res.status(409).json({
+      error: 'Ce colis est déjà pris en charge : contactez-nous pour toute correction.',
+    });
+    return null;
+  }
+  return c;
+}
+
+// PATCH /api/colis/:id — corriger une declaration
+router.patch('/:id', auth, async (req, res, next) => {
+  try {
+    const c = await chargerSiModifiable(req, res);
+    if (!c) return;
+
+    const { fournisseur, num_commande, tracking_num, description, poids } = req.body;
+    if (num_commande !== undefined && !String(num_commande).trim())
+      return res.status(400).json({ error: 'Le numéro de commande est obligatoire' });
+
+    // On ne touche qu'aux champs reellement transmis.
+    const maj = {
+      fournisseur:  fournisseur  !== undefined ? (fournisseur || null) : c.fournisseur,
+      num_commande: num_commande !== undefined ? String(num_commande).trim() : c.num_commande,
+      tracking_num: tracking_num !== undefined ? (tracking_num || null) : c.tracking_num,
+      description:  description  !== undefined ? (description || null) : c.description,
+      poids:        poids        !== undefined ? (poids ? parseFloat(poids) : null) : c.poids,
+    };
+
+    const maj_c = await db.row(
+      `UPDATE colis SET fournisseur = $1, num_commande = $2, tracking_num = $3,
+                        description = $4, poids = $5
+       WHERE id = $6 RETURNING *`,
+      [maj.fournisseur, maj.num_commande, maj.tracking_num, maj.description, maj.poids, c.id]
+    );
+    res.json(normaliser(maj_c));
+  } catch (e) { next(e); }
+});
+
+// DELETE /api/colis/:id — retirer une declaration
+router.delete('/:id', auth, async (req, res, next) => {
+  try {
+    const c = await chargerSiModifiable(req, res);
+    if (!c) return;
+    await db.query(`DELETE FROM colis WHERE id = $1`, [c.id]);
+    res.json({ ok: true });
+  } catch (e) { next(e); }
+});
+
 // GET /api/colis/:ref — suivi public
 router.get('/:ref', async (req, res, next) => {
   try {
