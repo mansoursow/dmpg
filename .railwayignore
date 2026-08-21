@@ -1,0 +1,19 @@
+# Secrets : ne doivent jamais quitter la machine
+.env
+.env.*
+!.env.example
+backend/.env
+backend/.env.*
+!backend/.env.example
+
+# Base locale et donnees
+backend/.pgdata/
+backend/.pgdata-test/
+backend/data/
+uploads/
+
+# Inutile au build distant
+node_modules/
+.git/
+image/
+*.log
