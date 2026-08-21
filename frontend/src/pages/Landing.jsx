@@ -5,6 +5,7 @@ import {
   Calculator, ArrowRight, Truck, Users, CheckCircle2,
   MessageCircle, PhoneCall, AlertTriangle, UserPlus
 } from 'lucide-react';
+import { SUPPORT, waLien } from '../support';
 import styles from './Landing.module.css';
 
 const STEPS = [
@@ -31,13 +32,6 @@ const ENSEIGNES = [
   { nom: 'Bershka' },
   { nom: 'Zara' },
 ];
-
-const SUPPORT = {
-  numero: '+221 77 586 08 29',
-  tel:    '+221775860829',
-  wa:     '221775860829',
-};
-const waLien = (msg) => `https://wa.me/${SUPPORT.wa}?text=${encodeURIComponent(msg)}`;
 
 const ADDRESS = {
   'Nom': 'Votre Prénom Nom – GP-XXXX',

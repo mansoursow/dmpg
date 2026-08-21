@@ -7,6 +7,7 @@ import {
 import QRCode from 'qrcode';
 import api from '../api';
 import { useToast } from '../components/Toast';
+import { urlSuivi } from '../support';
 import styles from './Admin.module.css';
 
 const NAV = [
@@ -90,8 +91,10 @@ export default function Admin() {
   }
 
   async function openQR(c) {
-    const data = `DMGP|${c.ref}|${c.gp_id}|${c.fournisseur||'?'}|${c.tracking_num||'?'}`;
-    const url = await QRCode.toDataURL(data, { width: 200, margin:2, color: { dark:'#1B3A6B' } });
+    // Meme cible que cote client : la fiche de suivi publique.
+    const url = await QRCode.toDataURL(urlSuivi(c.ref), {
+      width: 260, margin: 2, errorCorrectionLevel: 'M', color: { dark: '#1E193D' },
+    });
     setQrUrl(url); setQrModal(c);
   }
 

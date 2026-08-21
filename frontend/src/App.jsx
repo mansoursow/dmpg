@@ -3,6 +3,7 @@ import Landing from './pages/Landing';
 import Login from './pages/Login';
 import ClientApp from './pages/ClientApp';
 import Admin from './pages/Admin';
+import Suivi from './pages/Suivi';
 import { ToastProvider } from './components/Toast';
 
 function PrivateRoute({ children, adminOnly = false }) {
@@ -20,6 +21,8 @@ export default function App() {
         <Routes>
           <Route path="/"       element={<Landing />} />
           <Route path="/login"  element={<Login />} />
+          {/* Publique : c'est la cible des QR codes collés sur les colis. */}
+          <Route path="/suivi/:ref" element={<Suivi />} />
           <Route path="/app/*"  element={<PrivateRoute><ClientApp /></PrivateRoute>} />
           <Route path="/admin/*" element={<PrivateRoute adminOnly><Admin /></PrivateRoute>} />
           <Route path="*"       element={<Navigate to="/" replace />} />

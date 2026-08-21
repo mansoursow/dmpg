@@ -10,16 +10,11 @@ import {
 import QRCode from 'qrcode';
 import api from '../api';
 import { useToast } from '../components/Toast';
+import { SUPPORT, waLien, urlSuivi } from '../support';
 import styles from './ClientApp.module.css';
 
-// Ligne directe : WhatsApp et appel, joignables depuis toutes les vues.
-export const SUPPORT = {
-  numero: '+221 77 586 08 29',
-  tel:    '+221775860829',
-  wa:     '221775860829',
-};
-export const waLien = (msg) =>
-  `https://wa.me/${SUPPORT.wa}?text=${encodeURIComponent(msg)}`;
+// Ligne directe et URL de suivi : voir src/support.js
+export { SUPPORT, waLien } from '../support';
 
 const NAV = [
   { id: 'dashboard', icon: <LayoutDashboard size={20}/>, label: 'Dashboard' },
@@ -396,8 +391,10 @@ function ExpeditionPanel({ colis, onRefresh }) {
 
   async function showQR(c) {
     setQrColis(c);
-    const data = `DMGP|${c.ref}|${c.gp_id}|${c.fournisseur || '?'}|cmd:${c.num_commande || '?'}|suivi:${c.tracking_num || '?'}`;
-    setQrUrl(await QRCode.toDataURL(data, { width: 240, margin: 2, color: { dark: '#1E193D' } }));
+    // Une URL, pas du texte : un scan ouvre directement la fiche de suivi.
+    setQrUrl(await QRCode.toDataURL(urlSuivi(c.ref), {
+      width: 260, margin: 2, errorCorrectionLevel: 'M', color: { dark: '#1E193D' },
+    }));
   }
 
   function downloadQR() {
@@ -482,6 +479,13 @@ function ExpeditionPanel({ colis, onRefresh }) {
               <img src={qrUrl} alt="QR" style={{ borderRadius: 12, border: '1px solid var(--warm-line)' }}/>
               <p style={{ fontSize: 16, color: 'var(--muted)', marginTop: 12 }}>
                 {qrColis.fournisseur} · {qrColis.gp_id} · {qrColis.tracking_num || 'Sans suivi'}
+              </p>
+              <p style={{ fontSize: 15, color: 'var(--muted)', marginTop: 6 }}>
+                Un scan ouvre&nbsp;:{' '}
+                <a href={urlSuivi(qrColis.ref)} target="_blank" rel="noreferrer"
+                   style={{ color: 'var(--accent)', wordBreak: 'break-all' }}>
+                  {urlSuivi(qrColis.ref)}
+                </a>
               </p>
             </div>
             <button className="btn btn-primary" style={{ width: '100%', justifyContent: 'center', marginBottom: 10 }} onClick={downloadQR}>
