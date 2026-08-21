@@ -1,10 +1,20 @@
 require('dotenv').config();
+
+// Avant tout le reste : un require manquant plus bas ferait echouer sur
+// une seule variable a la fois, au prix d'un deploiement par variable.
+const { EST_PROD, verifierConfig } = require('./env');
+try {
+  verifierConfig();
+} catch (e) {
+  console.error(e.message);
+  process.exit(1);
+}
+
 const express = require('express');
 const cors    = require('cors');
 const path    = require('path');
 const fs      = require('fs');
 const db      = require('./db');
-const { EST_PROD } = require('./env');
 
 const app  = express();
 const PROD = EST_PROD;
