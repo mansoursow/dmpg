@@ -84,12 +84,30 @@ async function row(sql, params) {
   return (await query(sql, params)).rows[0] || null;
 }
 
-/** Compte d'administration, créé au premier démarrage seulement. */
+/**
+ * Compte d'administration.
+ *
+ * ADMIN_PASSWORD fait foi : si le compte existe deja mais que son mot de
+ * passe ne correspond plus a la variable, il est realigne au demarrage.
+ * Sans cela, changer la variable n'avait aucun effet — le compte gardait
+ * indefiniment son mot de passe d'origine.
+ */
 async function semerAdmin() {
-  const existe = await _query(`SELECT 1 FROM users WHERE role = 'admin' LIMIT 1`);
-  if (existe.rows.length) return;
-
   const bcrypt = require('bcryptjs');
+  const existant = await _query(
+    `SELECT id, password FROM users WHERE role = 'admin' ORDER BY id LIMIT 1`
+  );
+
+  if (existant.rows.length) {
+    const voulu = process.env.ADMIN_PASSWORD;
+    if (voulu && !bcrypt.compareSync(voulu, existant.rows[0].password)) {
+      await _query(`UPDATE users SET password = $1 WHERE id = $2`,
+        [bcrypt.hashSync(voulu, 10), existant.rows[0].id]);
+      console.log('🔑 Mot de passe administrateur realigne sur ADMIN_PASSWORD');
+    }
+    return;
+  }
+
   const motDePasse = process.env.ADMIN_PASSWORD;
   const email      = process.env.ADMIN_EMAIL || 'admin@dmgp.fr';
 
