@@ -46,11 +46,16 @@ const db   = require('./db');
     const n = parseInt(String(u.gp_id).replace(/\D/g, ''), 10);
     if (!Number.isNaN(n)) plusGrandGp = Math.max(plusGrandGp, n);
 
+    // L'ancien format « GP-1001 » est inutilisable chez les marchands, qui
+    // refusent les chiffres dans le champ « Nom » : on reprend le client
+    // avec son code lettré, l'ancien restant consultable pour les colis
+    // déjà étiquetés.
     const nb = colis.filter(c => c.client_id === u.id).length;
     const cree = await db.row(
-      `INSERT INTO users (gp_id, prenom, nom, telephone, email, password, role, colis_seq, created_at)
-       VALUES ($1,$2,$3,$4,$5,$6,'client',$7,$8) RETURNING id`,
-      [u.gp_id, u.prenom, u.nom, u.telephone, u.email || null, u.password,
+      `INSERT INTO users (gp_id, ancien_gp_id, prenom, nom, telephone, email, password, role, colis_seq, created_at)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,'client',$8,$9) RETURNING id`,
+      [Number.isNaN(n) ? u.gp_id : db.codeClient(n), u.gp_id,
+       u.prenom, u.nom, u.telephone, u.email || null, u.password,
        nb, u.created_at || new Date().toISOString()]
     );
     idParAncien.set(u.id, cree.id);
@@ -90,6 +95,6 @@ const db   = require('./db');
   }
 
   console.log(`✅ Repris : ${clients.length} client(s), ${colis.length} colis, ${notifs.length} notification(s).`);
-  console.log(`   Prochain identifiant attribué : GP-${plusGrandGp + 1}`);
+  console.log(`   Prochain identifiant attribué : ${db.codeClient(plusGrandGp + 1)}`);
   process.exit(0);
 })().catch(e => { console.error('💥', e.message); process.exit(1); });

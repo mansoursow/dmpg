@@ -39,10 +39,11 @@ const verifier = (nom, condition, detail = '') => {
   verifier('tables users/colis/notifications',
     ['colis','notifications','users'].every(t => tables.includes(t)), tables.join(','));
 
-  // ── Séquence GP-ID : le bug historique ──
+  // ── Séquence d'identifiants : le bug historique ──
   console.log('\n▶ Identifiants clients (ex-bug des doublons)');
+  const { codeClient } = require('./db');
   const creer = async (prenom, email) => {
-    const gp = 'GP-' + (await un(`SELECT nextval('gp_id_seq') AS n`)).n;
+    const gp = codeClient(Number((await un(`SELECT nextval('gp_id_seq') AS n`)).n));
     return un(
       `INSERT INTO users (gp_id, prenom, nom, telephone, email, password)
        VALUES ($1,$2,'X','0','${email}','h') RETURNING *`, [gp, prenom]);
@@ -50,14 +51,36 @@ const verifier = (nom, condition, detail = '') => {
   const a = await creer('A', 'a@x.fr');
   const b = await creer('B', 'b@x.fr');
   const c = await creer('C', 'c@x.fr');
-  verifier('GP-ID successifs', `${a.gp_id},${b.gp_id},${c.gp_id}` === 'GP-1001,GP-1002,GP-1003',
+
+  // Le champ « Nom » des marchands refuse les chiffres : un code qui en
+  // contient est inutilisable, c'est tout l'objet du format lettré.
+  verifier('codes en lettres seules, sans chiffre ni tiret',
+    [a, b, c].every(u => /^[A-Z]+$/.test(u.gp_id)),
     `${a.gp_id},${b.gp_id},${c.gp_id}`);
+  verifier('codes successifs tous différents',
+    new Set([a.gp_id, b.gp_id, c.gp_id]).size === 3,
+    `${a.gp_id},${b.gp_id},${c.gp_id}`);
+
+  // L'encodage est bijectif : deux numéros de séquence ne peuvent pas
+  // retomber sur le même code, y compris au-delà des 160 000 codes à
+  // quatre lettres — le générateur passe alors à cinq.
+  const vus = new Set();
+  for (let n = 1001; n < 201001; n++) vus.add(codeClient(n));
+  verifier('200 000 codes consécutifs, aucune collision', vus.size === 200000, String(vus.size));
+
+  // Colonne de reprise : sans elle, un colis étiqueté « GP-1001 » avant la
+  // conversion ne serait plus rattachable à personne.
+  const colonnes = (await q(
+    `SELECT column_name FROM information_schema.columns WHERE table_name='users'`
+  )).rows.map(r => r.column_name);
+  verifier('colonne ancien_gp_id présente', colonnes.includes('ancien_gp_id'), colonnes.join(','));
 
   // Le scénario qui cassait : supprimer un client puis en créer un autre.
   await q(`DELETE FROM users WHERE id = $1`, [b.id]);
   const d = await creer('D', 'd@x.fr');
-  verifier('après suppression, aucun GP-ID réutilisé',
-    d.gp_id === 'GP-1004', `obtenu ${d.gp_id}, l'ancien code aurait donné GP-1003`);
+  verifier('après suppression, aucun code réutilisé',
+    d.gp_id === codeClient(1004) && d.gp_id !== c.gp_id,
+    `obtenu ${d.gp_id}, l'ancien code aurait redonné ${c.gp_id}`);
 
   // ── Contrainte d'unicité ──
   console.log('\n▶ Contraintes');
@@ -71,7 +94,7 @@ const verifier = (nom, condition, detail = '') => {
   violation = null;
   try {
     await q(`INSERT INTO users (gp_id, prenom, nom, telephone, email, password)
-             VALUES ('GP-9999','F','X','0','a@x.fr','h')`);
+             VALUES ('GPZZZZ','F','X','0','a@x.fr','h')`);
   } catch (e) { violation = e.code || e.message; }
   verifier('email en double refusé', violation !== null, String(violation));
 

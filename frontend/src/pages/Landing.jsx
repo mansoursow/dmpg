@@ -9,7 +9,7 @@ import { SUPPORT, waLien } from '../support';
 import styles from './Landing.module.css';
 
 const STEPS = [
-  { icon: <Users size={24}/>,   label: 'Inscrivez-vous', desc: 'Créez votre compte gratuit et obtenez votre ID unique GP-XXXX en 30 secondes.' },
+  { icon: <Users size={24}/>,   label: 'Inscrivez-vous', desc: 'Créez votre compte gratuit et obtenez votre code unique en lettres (ex. GPGHWF) en 30 secondes.' },
   { icon: <MapPin size={24}/>,  label: 'Notre adresse Paris', desc: 'Faites livrer vos commandes à notre dépôt : 14 Bd de la Chapelle, 75018 Paris.' },
   { icon: <Package size={24}/>, label: 'Déclarez dès l\'achat', desc: 'Dès qu\'une commande est validée, déclarez-la avec son numéro de commande, puis le numéro de colis.' },
   { icon: <Truck size={24}/>,   label: 'Suivez & recevez', desc: 'Suivez chaque étape en temps réel et recevez votre colis à Dakar.' },
@@ -34,7 +34,7 @@ const ENSEIGNES = [
 ];
 
 const ADDRESS = {
-  'Nom': 'Votre Prénom Nom – GP-XXXX',
+  'Nom': 'Votre Prénom Nom GPXXXX',
   'Complément': 'Magasin Mr ...',
   'Adresse': '14 Boulevard .......',
   'Code postal': '75018',
@@ -277,9 +277,10 @@ export default function Landing() {
               <div className={styles.addressCtaTexte}>
                 <strong>Il manque votre identifiant</strong>
                 <p>
-                  Le <code>GP-XXXX</code> ci-dessus est un exemple. Sans votre identifiant
-                  personnel sur le colis, nous ne pouvons pas le rattacher à votre compte
-                  à son arrivée à Paris.
+                  Le <code>GPXXXX</code> ci-dessus est un exemple : votre code personnel
+                  s'écrit juste après votre nom, en lettres seules — les sites marchands
+                  refusent les chiffres dans ce champ. Sans ce code sur le colis, nous ne
+                  pouvons pas le rattacher à votre compte à son arrivée à Paris.
                 </p>
               </div>
               <Link to="/login?mode=register" className={`btn btn-primary ${styles.addressCtaBtn}`}>

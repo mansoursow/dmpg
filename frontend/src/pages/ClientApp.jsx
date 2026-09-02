@@ -254,7 +254,9 @@ function ProfilePanel({ user, colis }) {
     livre:   colis.filter(c => c.status === 'livre').length,
   };
 
-  const nomExpedition = `${user?.prenom} ${user?.nom} – ${user?.gp_id}`;
+  // Le code se colle a la suite du nom, sans separateur : les marchands
+  // refusent les chiffres et bien souvent aussi les crochets ou tirets.
+  const nomExpedition = `${user?.prenom} ${user?.nom} ${user?.gp_id}`;
   const fields = { 'Nom': nomExpedition, ...DEPOT };
 
   function copy(k, v) {
@@ -267,7 +269,7 @@ function ProfilePanel({ user, colis }) {
   return (
     <div className={styles.panel}>
       <div className={styles.userName}>
-        {user?.prenom} {user?.nom} <span className={styles.userId}>[{user?.gp_id}]</span>
+        {user?.prenom} {user?.nom} <span className={styles.userId}>{user?.gp_id}</span>
       </div>
 
       <div className={styles.statRow}>
@@ -318,7 +320,18 @@ function ProfilePanel({ user, colis }) {
                   <p>
                     C'est lui qui nous permet de rattacher un colis à votre compte
                     à son arrivée à Paris. Un colis sans identifiant ne peut pas être attribué.
+                    Il s'écrit juste après votre nom : en lettres seules, il passe
+                    dans le champ « Nom » des sites marchands, qui refusent les chiffres.
                   </p>
+                  {/* Les clients inscrits avant le changement ont pu donner
+                      l'ancien code à un marchand : il reste reconnu. */}
+                  {user?.ancien_gp_id && (
+                    <p className={styles.gpAncien}>
+                      Votre ancien identifiant <strong>{user.ancien_gp_id}</strong> reste
+                      valable pour les colis déjà commandés. Utilisez le nouveau code
+                      pour vos prochaines commandes.
+                    </p>
+                  )}
                 </div>
                 <button className={styles.gpCode} onClick={() => copy('gp', user?.gp_id)}>
                   {user?.gp_id}

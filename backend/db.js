@@ -56,6 +56,7 @@ function demarrer() {
       await _query(instruction);
     }
     await semerAdmin();
+    await convertirAnciensCodes();
   })();
 
   return _pret;
@@ -137,13 +138,75 @@ async function semerAdmin() {
   console.log(`✅ Compte administrateur créé : ${email}`);
 }
 
+/* ──────────────────────────────────────────────────────────────
+ *  Identifiant client
+ *
+ *  Les marchands (Shein, Zara, Amazon…) refusent les chiffres dans le
+ *  champ « Nom » : « Abdou Mbaye [GP-1001] » y est impossible à saisir.
+ *  Le code est donc fait de lettres seules, sans tiret ni crochet, pour
+ *  s'écrire à la suite du nom : « Abdou Mbaye GPGHWF ».
+ * ────────────────────────────────────────────────────────────── */
+
+// Les 20 consonnes uniquement : sans voyelle, aucun mot — donc aucun juron
+// ni sigle malheureux — ne peut sortir du générateur. Exclure I et O écarte
+// au passage la confusion avec les chiffres 1 et 0.
+const ALPHABET = 'BCDFGHJKLMNPQRSTVWXZ';
+const PREFIXE  = 'GP';
+const LONGUEUR = 4;                       // 20⁴ = 160 000 codes avant d'ajouter une lettre
+
+// Le numéro de séquence est multiplié avant d'être encodé : deux inscriptions
+// successives donnent des codes visiblement différents, donc une faute de
+// frappe ne tombe pas sur le voisin d'inscription. Le facteur est impair et
+// non multiple de 5, donc premier avec 20^n : la transformation reste
+// bijective et deux clients ne peuvent pas obtenir le même code.
+const PAS = 51343;
+
+function codeClient(n) {
+  let largeur  = LONGUEUR;
+  let capacite = ALPHABET.length ** largeur;
+  // Au-delà de la capacité on allonge d'une lettre plutôt que de reboucler :
+  // un code plus long ne peut collisionner avec aucun code plus court.
+  while (n >= capacite) { largeur++; capacite *= ALPHABET.length; }
+
+  let reste = (n * PAS) % capacite;
+  let code  = '';
+  for (let i = 0; i < largeur; i++) {
+    code  = ALPHABET[reste % ALPHABET.length] + code;
+    reste = Math.floor(reste / ALPHABET.length);
+  }
+  return PREFIXE + code;
+}
+
 /**
- * Identifiant client, tiré d'une séquence.
- * Ne peut ni reculer ni être réattribué après suppression d'un client.
+ * Identifiant client, tiré d'une séquence puis encodé en lettres.
+ * La séquence ne recule pas : un code ne peut être réattribué après
+ * la suppression d'un client.
  */
 async function prochainGpId() {
   const r = await row(`SELECT nextval('gp_id_seq') AS n`);
-  return 'GP-' + r.n;
+  return codeClient(Number(r.n));
+}
+
+/**
+ * Conversion des identifiants historiques « GP-1001 » en codes lettrés.
+ * Rejouée à chaque démarrage sans effet : après conversion, plus aucune
+ * ligne ne correspond au motif. L'ancien code est conservé dans
+ * `ancien_gp_id` pour les colis déjà étiquetés à l'ancien format.
+ */
+async function convertirAnciensCodes() {
+  const anciens = (await _query(
+    `SELECT id, gp_id FROM users WHERE role = 'client' AND gp_id ~ '^GP-[0-9]+$'`
+  )).rows;
+
+  for (const u of anciens) {
+    await _query(
+      `UPDATE users SET gp_id = $1, ancien_gp_id = $2 WHERE id = $3`,
+      [codeClient(parseInt(u.gp_id.slice(3), 10)), u.gp_id, u.id]
+    );
+  }
+  if (anciens.length) {
+    console.log(`🔤 ${anciens.length} identifiant(s) client converti(s) en code lettré`);
+  }
 }
 
 /**
@@ -160,4 +223,4 @@ async function prochaineRef(clientId) {
   return `DMG-${clientId}-${String(r.colis_seq).padStart(3, '0')}`;
 }
 
-module.exports = { demarrer, query, rows, row, prochainGpId, prochaineRef };
+module.exports = { demarrer, query, rows, row, prochainGpId, prochaineRef, codeClient };

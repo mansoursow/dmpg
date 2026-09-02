@@ -5,10 +5,12 @@ import api from '../api';
 import { useToast } from '../components/Toast';
 import styles from './Login.module.css';
 
-// Le service ne dessert que le corridor Paris-Dakar : deux indicatifs suffisent.
+// Indicatifs desservis. Les trois pays ont des numéros à 9 chiffres
+// une fois l'indicatif et le zéro initial retirés.
 const PAYS = {
-  '+33':  { drapeau: '🇫🇷', nom: 'France',   exemple: '6 12 34 56 78' },
-  '+221': { drapeau: '🇸🇳', nom: 'Sénégal',  exemple: '77 123 45 67' },
+  '+33':  { drapeau: '🇫🇷', nom: 'France',   exemple: '6 12 34 56 78', longueur: 9 },
+  '+221': { drapeau: '🇸🇳', nom: 'Sénégal',  exemple: '77 123 45 67',  longueur: 9 },
+  '+212': { drapeau: '🇲🇦', nom: 'Maroc',    exemple: '6 12 34 56 78', longueur: 9 },
 };
 
 // Accepte 06…, +33 6…, 0033 6… ou 77… : on retire l'indicatif et les zéros de tête.
@@ -44,9 +46,10 @@ export default function Login() {
 
     let charge = form;
     if (mode === 'register') {
+      const pays = PAYS[indicatif];
       const num = normaliserTel(indicatif, form.telephone);
-      if (num.length !== 9) {
-        toast(`Numéro ${PAYS[indicatif].nom} invalide : 9 chiffres attendus (ex. ${PAYS[indicatif].exemple})`, 'error');
+      if (num.length !== pays.longueur) {
+        toast(`Numéro ${pays.nom} invalide : ${pays.longueur} chiffres attendus (ex. ${pays.exemple})`, 'error');
         return;
       }
       charge = { ...form, telephone: `${indicatif} ${num}` };
@@ -107,7 +110,7 @@ export default function Login() {
           <p className={styles.sub}>
             {mode === 'login'
               ? 'Connectez-vous pour accéder à votre espace client'
-              : 'Inscription gratuite — obtenez votre ID GP-XXXX instantanément'}
+              : 'Inscription gratuite — obtenez votre code client instantanément'}
           </p>
 
           <form onSubmit={submit}>
@@ -157,7 +160,7 @@ export default function Login() {
                   </div>
                 </div>
                 <p className={styles.aide}>
-                  Numéro {PAYS[indicatif].nom} — 9 chiffres, sans le zéro initial
+                  Numéro {PAYS[indicatif].nom} — {PAYS[indicatif].longueur} chiffres, sans le zéro initial
                 </p>
               </div>
             )}

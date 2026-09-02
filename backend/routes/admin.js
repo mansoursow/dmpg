@@ -41,6 +41,7 @@ router.get('/colis', async (req, res, next) => {
       conditions.push(`(
         u.prenom ILIKE $${params.length} OR u.nom ILIKE $${params.length} OR
         u.gp_id  ILIKE $${params.length} OR c.ref ILIKE $${params.length} OR
+        coalesce(u.ancien_gp_id,'') ILIKE $${params.length} OR
         coalesce(c.tracking_num,'') ILIKE $${params.length} OR
         coalesce(c.num_commande,'') ILIKE $${params.length}
       )`);
@@ -99,7 +100,7 @@ router.patch('/colis/:id/status', async (req, res, next) => {
 router.get('/clients', async (_req, res, next) => {
   try {
     const r = await db.rows(`
-      SELECT u.id, u.gp_id, u.prenom, u.nom, u.telephone, u.email, u.created_at,
+      SELECT u.id, u.gp_id, u.ancien_gp_id, u.prenom, u.nom, u.telephone, u.email, u.created_at,
              count(c.id)::int AS nb_colis
       FROM users u
       LEFT JOIN colis c ON c.client_id = u.id

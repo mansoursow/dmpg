@@ -21,6 +21,22 @@ const PROD = EST_PROD;
 
 app.set('trust proxy', 1);          // Railway / Render placent un proxy devant
 
+// ── Domaine canonique ──
+// Le site repond sur dm-gp.com et www.dm-gp.com : sans redirection, les deux
+// versions coexistent (mauvais pour le referencement, cookies dedoubles).
+// CANONICAL_HOST = 'www.dm-gp.com' renvoie l'apex vers le www en 301.
+// Non defini : aucune redirection, comportement inchange.
+const HOTE_CANONIQUE = (process.env.CANONICAL_HOST || '').trim().toLowerCase();
+if (HOTE_CANONIQUE) {
+  const HOTE_APEX = HOTE_CANONIQUE.replace(/^www\./, '');
+  app.use((req, res, next) => {
+    // Comparaison stricte sur l'apex seul : le domaine interne de Railway et
+    // le healthcheck ne doivent jamais etre rediriges.
+    if (req.hostname.toLowerCase() !== HOTE_APEX) return next();
+    res.redirect(301, 'https://' + HOTE_CANONIQUE + req.originalUrl);
+  });
+}
+
 // ── CORS ──
 // `origin: '*'` laissait n'importe quel site appeler l'API avec le token
 // d'un visiteur connecté. En production, seule la liste blanche passe.

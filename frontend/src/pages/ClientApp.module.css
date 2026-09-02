@@ -312,6 +312,15 @@
 .gpAlerteTexte { flex: 1; min-width: 210px; }
 .gpAlerteTexte strong { display: block; font-size: 17px; font-weight: 600; color: #fff; margin-bottom: 6px; }
 .gpAlerteTexte p { font-size: 15px; font-weight: 400; color: rgba(255,255,255,.66); line-height: 1.6; }
+/* Rappel affiché aux clients inscrits avant le passage au code lettré. */
+.gpAncien {
+  margin-top: 10px; padding-top: 10px;
+  border-top: 1px solid rgba(255,255,255,.14);
+}
+.gpAncien strong {
+  display: inline; font-size: inherit; color: #fff;
+  font-family: ui-monospace, SFMono-Regular, monospace;
+}
 .gpCode {
   display: inline-flex; align-items: center; gap: 12px;
   background: var(--accent); color: #fff; border: none; cursor: pointer;

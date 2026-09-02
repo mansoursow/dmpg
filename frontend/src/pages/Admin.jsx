@@ -296,7 +296,10 @@ function ViewColis({ colis, search, setSearch, statusFilter, setStatusFilter, lo
 function ViewClients({ clients, colis, deleteClient }) {
   const [search, setSearch] = useState('');
   const filtered = clients.filter(c =>
-    !search || (`${c.prenom} ${c.nom} ${c.gp_id} ${c.telephone}`).toLowerCase().includes(search.toLowerCase())
+    // L'ancien code chiffré reste cherchable : les colis étiquetés avant
+    // le passage aux codes lettrés ne portent que celui-là.
+    !search || (`${c.prenom} ${c.nom} ${c.gp_id} ${c.ancien_gp_id || ''} ${c.telephone}`)
+      .toLowerCase().includes(search.toLowerCase())
   );
 
   return (
@@ -316,7 +319,14 @@ function ViewClients({ clients, colis, deleteClient }) {
               ? <tr><td colSpan={7} style={{textAlign:'center',padding:40,color:'var(--text-light)'}}>Aucun client</td></tr>
               : filtered.map(c => (
                   <tr key={c.id}>
-                    <td><strong style={{color:'var(--orange)',fontFamily:'monospace'}}>{c.gp_id}</strong></td>
+                    <td>
+                      <strong style={{color:'var(--orange)',fontFamily:'monospace'}}>{c.gp_id}</strong>
+                      {c.ancien_gp_id && (
+                        <div style={{fontSize:13,color:'var(--text-light)',fontFamily:'monospace'}}>
+                          ex-{c.ancien_gp_id}
+                        </div>
+                      )}
+                    </td>
                     <td>
                       <div style={{display:'flex',alignItems:'center',gap:10}}>
                         <div style={{width:34,height:34,borderRadius:'50%',background:'var(--ink)',display:'flex',alignItems:'center',justifyContent:'center',color:'#fff',fontWeight:600,fontSize:15,flexShrink:0}}>

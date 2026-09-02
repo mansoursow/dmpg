@@ -4,7 +4,9 @@
 
 -- Les identifiants clients viennent d'une séquence, jamais d'un COUNT.
 -- Une séquence ne recule pas : supprimer un client ne peut plus
--- provoquer la réattribution d'un GP-ID déjà utilisé.
+-- provoquer la réattribution d'un identifiant déjà utilisé. Le numéro tiré
+-- ici n'est pas affiché tel quel : db.js le transforme en code lettré
+-- (« GPGHWF »), seul format acceptable dans le champ « Nom » d'un marchand.
 CREATE SEQUENCE IF NOT EXISTS gp_id_seq START WITH 1001;
 
 CREATE TABLE IF NOT EXISTS users (
@@ -22,6 +24,11 @@ CREATE TABLE IF NOT EXISTS users (
   colis_seq   INTEGER     NOT NULL DEFAULT 0,
   created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+-- Ancien identifiant chiffré (« GP-1001 »), conservé après la conversion en
+-- code lettré. Les colis expédiés avant le changement portent encore l'ancien
+-- code : sans cette colonne, l'équipe ne pourrait plus les rattacher.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS ancien_gp_id TEXT;
 
 CREATE TABLE IF NOT EXISTS colis (
   id            SERIAL PRIMARY KEY,
