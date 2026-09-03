@@ -109,3 +109,15 @@
   .content { padding: 24px 20px; }
   .kpiVal { font-size: 34px; }
 }
+
+/* Vignette photo du colis, dans le tableau et au survol */
+.vignette {
+  width: 46px; height: 46px; object-fit: cover; display: block;
+  border-radius: 8px; border: 1px solid var(--line); cursor: zoom-in;
+}
+.vignette:hover { border-color: var(--accent); }
+.vignetteVide {
+  width: 46px; height: 46px; border-radius: 8px; color: var(--muted);
+  border: 1px dashed var(--line); display: flex;
+  align-items: center; justify-content: center;
+}

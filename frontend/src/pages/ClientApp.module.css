@@ -418,3 +418,16 @@
   .infoRow { flex-wrap: wrap; gap: 4px; }
   .infoKey { width: 100%; }
 }
+
+/* Vignette de la photo prise par l'equipe, dans le tableau des colis */
+.cellColis { display: flex; align-items: center; gap: 12px; }
+.vignette {
+  width: 44px; height: 44px; object-fit: cover; flex-shrink: 0;
+  border-radius: 10px; border: 1px solid var(--warm-line); cursor: zoom-in;
+}
+.vignette:hover { border-color: var(--accent); }
+.vignetteVide {
+  width: 44px; height: 44px; border-radius: 10px; flex-shrink: 0;
+  border: 1px dashed var(--warm-line); color: var(--muted);
+  display: flex; align-items: center; justify-content: center;
+}

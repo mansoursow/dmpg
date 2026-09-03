@@ -397,6 +397,8 @@ function ExpeditionPanel({ colis, onRefresh }) {
   const [aModifier, setAModifier]   = useState(null);
   const [aSupprimer, setASupprimer] = useState(null);
   const [enCours, setEnCours]       = useState(false);
+  // Photo prise par l'équipe à la réception : le client voit son carton.
+  const [photoVue, setPhotoVue]     = useState(null);
   const toast = useToast();
 
   // Le backend refuse toute modification passe le stade « en attente » :
@@ -485,9 +487,17 @@ function ExpeditionPanel({ colis, onRefresh }) {
               return (
                 <tr key={c.id}>
                   <td>
-                    <div className={styles.cellStrong}>{c.tracking_num || c.fournisseur || 'Colis'}</div>
-                    <div className={styles.cellMono}>
-                      {c.ref}{c.num_commande ? ` · cmd ${c.num_commande}` : ''}
+                    <div className={styles.cellColis}>
+                      {c.photo
+                        ? <img src={c.photo} alt="Photo du colis" className={styles.vignette}
+                               onClick={() => setPhotoVue(c)}/>
+                        : <div className={styles.vignetteVide}><Package size={16}/></div>}
+                      <div>
+                        <div className={styles.cellStrong}>{c.tracking_num || c.fournisseur || 'Colis'}</div>
+                        <div className={styles.cellMono}>
+                          {c.ref}{c.num_commande ? ` · cmd ${c.num_commande}` : ''}
+                        </div>
+                      </div>
                     </div>
                   </td>
                   <td><span className="pill" style={{ background: s.bg, color: s.color }}>{s.label}</span></td>
@@ -519,6 +529,23 @@ function ExpeditionPanel({ colis, onRefresh }) {
           </tbody>
         </table>
       </div>
+
+      {photoVue && (
+        <div className="modal-overlay" onClick={() => setPhotoVue(null)}>
+          <div className="modal-box" onClick={e => e.stopPropagation()} style={{ maxWidth: 520 }}>
+            <h3>Colis {photoVue.ref}</h3>
+            <img src={photoVue.photo} alt="Photo du colis"
+                 style={{ width: '100%', borderRadius: 12, marginBottom: 16 }}/>
+            {photoVue.description && (
+              <p style={{ fontSize: 16, color: 'var(--muted)', marginBottom: 16 }}>
+                {photoVue.description}
+              </p>
+            )}
+            <button className="btn btn-ghost" style={{ width: '100%', justifyContent: 'center' }}
+                    onClick={() => setPhotoVue(null)}>Fermer</button>
+          </div>
+        </div>
+      )}
 
       {aModifier && (
         <ModifierColis

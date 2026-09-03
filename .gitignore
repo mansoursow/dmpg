@@ -4,9 +4,9 @@ dist/
 .env.*
 !.env.example
 
-# Base locale PGlite : ne jamais versionner de donnees clients
-backend/.pgdata/
-backend/.pgdata-test/
+# Base locale PGlite : ne jamais versionner de donnees clients.
+# Le motif couvre aussi les copies mises de cote (.pgdata.casse, .pgdata-test).
+backend/.pgdata*/
 
 # Ancienne base lowdb, remplacee par Postgres
 backend/data/
