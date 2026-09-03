@@ -387,6 +387,29 @@ function ProfilePanel({ user, colis }) {
   );
 }
 
+/**
+ * Vignette de la photo d'un colis.
+ *
+ * La photo peut ne plus exister : les colis declares avant Cloudinary
+ * pointent sur `/uploads/…`, un disque efface a chaque redeploiement.
+ * Sans le repli sur l'icone, le navigateur affiche le texte alternatif
+ * a la place de l'image — « Photo du colis » en toutes lettres dans le
+ * tableau.
+ */
+function Vignette({ colis, onOuvrir }) {
+  const [chargeable, setChargeable] = useState(Boolean(colis.photo));
+
+  if (!chargeable) {
+    return <div className={styles.vignetteVide}><Package size={16}/></div>;
+  }
+  return (
+    <img src={colis.photo} alt="" className={styles.vignette}
+         title="Voir la photo"
+         onClick={() => onOuvrir(colis)}
+         onError={() => setChargeable(false)}/>
+  );
+}
+
 /* ════════════ TABLEAU DES EXPÉDITIONS ════════════ */
 function ExpeditionPanel({ colis, onRefresh }) {
   const [q, setQ] = useState('');
@@ -488,10 +511,7 @@ function ExpeditionPanel({ colis, onRefresh }) {
                 <tr key={c.id}>
                   <td>
                     <div className={styles.cellColis}>
-                      {c.photo
-                        ? <img src={c.photo} alt="Photo du colis" className={styles.vignette}
-                               onClick={() => setPhotoVue(c)}/>
-                        : <div className={styles.vignetteVide}><Package size={16}/></div>}
+                      <Vignette colis={c} onOuvrir={setPhotoVue}/>
                       <div>
                         <div className={styles.cellStrong}>{c.tracking_num || c.fournisseur || 'Colis'}</div>
                         <div className={styles.cellMono}>

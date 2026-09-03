@@ -297,6 +297,28 @@ export default function Admin() {
   );
 }
 
+/**
+ * Vignette de la photo d'un colis.
+ *
+ * Les colis declares avant Cloudinary pointent sur `/uploads/…`, un disque
+ * efface a chaque redeploiement : la photo n'existe plus. On retombe alors
+ * sur l'icone, jamais sur une image cassee — et l'absence de vignette
+ * signale a l'equipe qu'il faut en reprendre une.
+ */
+function Vignette({ colis, onOuvrir }) {
+  const [chargeable, setChargeable] = useState(Boolean(colis.photo));
+
+  if (!chargeable) {
+    return <div className={styles.vignetteVide}><ImageIcon size={16}/></div>;
+  }
+  return (
+    <img src={colis.photo} alt="" className={styles.vignette}
+         title="Voir la photo"
+         onClick={() => onOuvrir(colis.photo)}
+         onError={() => setChargeable(false)}/>
+  );
+}
+
 /* ── MESSAGE WHATSAPP ──
    Pas d'envoi automatique : WhatsApp s'ouvre avec le message déjà écrit,
    relu et modifiable, et c'est l'équipe qui appuie sur envoyer. Aucun
@@ -597,11 +619,7 @@ function ViewColis({ colis, search, setSearch, statusFilter, setStatusFilter, lo
                   const ss = STATUS_STYLE[c.status] || STATUS_STYLE.attente;
                   return (
                     <tr key={c.id}>
-                      <td>
-                        {c.photo
-                          ? <img src={c.photo} alt="" className={styles.vignette} onClick={() => onPhoto(c.photo)}/>
-                          : <div className={styles.vignetteVide}><ImageIcon size={16}/></div>}
-                      </td>
+                      <td><Vignette colis={c} onOuvrir={onPhoto}/></td>
                       <td style={{fontFamily:'monospace',fontSize:16,color:'var(--text-light)'}}>{c.ref}</td>
                       <td><strong style={{color:'var(--blue)'}}>{c.prenom} {c.nom}</strong><br/><span style={{fontSize:16,color:'var(--text-light)'}}>{c.gp_id}</span></td>
                       <td>{c.fournisseur||'—'}</td>
