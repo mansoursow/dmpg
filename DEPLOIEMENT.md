@@ -3,19 +3,23 @@
 ## Qui sert quoi
 
 ```
-dm-gp.com        A     191.96.63.15                     Hostinger  → 301 vers www
-www.dm-gp.com    CNAME dmpg-production.up.railway.app   Railway    → l'application
+dm-gp.com        ALIAS  arszvqzr.up.railway.app          Railway → l'application
+www.dm-gp.com    CNAME  dmpg-production.up.railway.app   Railway → l'application
 ```
 
-Deux hébergeurs, mais pas de conflit : ils sont chaînés. Hostinger ne fait
-qu'une redirection, toute l'application tourne sur Railway.
+Les deux adresses sont servies directement par Railway. Hostinger ne fait plus
+que le registrar et la zone DNS : plus aucune requête du site ne passe par lui.
 
 | | Rôle |
 |---|---|
-| **Hostinger** | Registrar du domaine, zone DNS, et redirection de l'apex vers le www |
 | **Railway** | Application (API + site), projet `humorous-fulfillment`, service `dmpg` |
+| **Hostinger** | Registrar du domaine et zone DNS — rien d'autre |
 | **Cloudinary** | Photos des colis — le disque de Railway est effacé à chaque déploiement |
 | **Postgres (Railway)** | Base de données, via `DATABASE_URL` |
+
+L'apex utilise un `ALIAS` et non un `CNAME` : un `CNAME` à la racine d'une zone
+est interdit par le DNS. Hostinger refuse d'ailleurs explicitement de faire
+cohabiter un `A` et un `ALIAS` sur le même nom.
 
 ## Déployer
 
@@ -34,47 +38,42 @@ chaque build, mais `index.html` peut rester en cache.
 Pour vérifier que la bonne version est en ligne :
 
 ```bash
-curl -sI https://www.dm-gp.com | grep -i last-modified
+curl -sI https://dm-gp.com | grep -i last-modified
 ```
 
-## Le fichier `.htaccess` de l'apex
+## Historique : la bascule de l'apex (3 septembre 2026)
 
-`dm-gp.com` est un domaine addon sur le plan Hostinger, dossier
-`/home/u282623197/domains/dm-gp.com/public_html`. Il ne contient qu'un fichier :
+Avant cette date, `dm-gp.com` pointait sur un plan d'hébergement Hostinger
+(`191.96.63.15`) dont le seul rôle était un `.htaccess` redirigeant vers
+`www`. Le site dépendait donc de deux hébergeurs en chaîne.
 
-```apache
-RewriteEngine On
-RewriteCond %{HTTP_HOST} !^www\. [NC]
-RewriteRule ^(.*)$ https://www.dm-gp.com/$1 [L,R=301]
-```
+La bascule, si elle doit être refaite ou comprise :
 
-La règle capture **toutes** les requêtes et conserve le chemin :
-`dm-gp.com/suivi/DMG-2-001` arrive bien sur `www.dm-gp.com/suivi/DMG-2-001`.
-Les QR codes et les liens de suivi fonctionnent donc avec ou sans `www`.
+1. **Plan Railway Hobby requis** — le plan gratuit n'autorise qu'un seul
+   domaine personnalisé par service, et `www` l'occupait.
+2. `railway domain dm-gp.com` — Railway renvoie la cible et un TXT de
+   vérification.
+3. Poser le TXT `_railway-verify` (sans impact sur le trafic), attendre que
+   `railway domain status <id>` affiche `Verified: yes`.
+4. **Supprimer l'enregistrement `A` de `@`**, puis poser l'`ALIAS` vers la
+   cible Railway. Ces deux opérations sont à enchaîner : l'apex ne répond plus
+   entre les deux.
+5. Attendre l'émission du certificat TLS — environ 6 minutes après la
+   propagation. Tant qu'il n'est pas émis, le navigateur affiche
+   `ERR_CERT_COMMON_NAME_INVALID` : c'est normal, il faut laisser faire.
 
-> **Ne pas supprimer ni vider ce fichier.** C'est la seule chose qui fait
-> répondre `dm-gp.com` tapé sans `www`. Un fichier déposé à côté ne casse rien
-> (la réécriture passe avant le service des fichiers), mais toucher au
-> `.htaccess` lui-même coupe l'apex.
+La zone DNS est sauvegardée automatiquement par Hostinger à chaque
+modification. En cas de problème, restaurer l'instantané précédent remet
+l'état d'avant en une minute (TTL des enregistrements : 300 s).
 
-## Mettre l'apex directement sur Railway
+## Reste du ménage Hostinger
 
-Aujourd'hui impossible : le plan Railway n'autorise **qu'un domaine
-personnalisé par service**, et `www.dm-gp.com` l'occupe.
+Deux éléments ne servent plus à rien mais n'ont pas été supprimés :
 
-```
-$ railway domain dm-gp.com
-You have reached the limit for custom domains per service on your plan.
-```
-
-Après montée de plan, la marche à suivre :
-
-1. `railway domain dm-gp.com` — Railway renvoie l'enregistrement DNS à poser.
-2. Remplacer l'enregistrement `A` de `@` (aujourd'hui `191.96.63.15`) par cette
-   cible dans la zone DNS Hostinger. Le TTL est à 300 s : retour arrière en
-   5 minutes si besoin.
-3. Une fois l'apex servi par Railway, supprimer le domaine addon `dm-gp.com`
-   côté Hostinger — il ne sert plus à rien.
+- le **domaine addon `dm-gp.com`** et son `.htaccess` de redirection : plus
+  aucun DNS ne pointe vers lui, il est inerte. Le supprimer risquerait
+  d'emporter la zone DNS avec lui, donc à ne faire qu'en connaissance de cause ;
+- l'enregistrement **`A ftp` → `191.96.63.15`**, inutilisé par l'application.
 
 ## Variables d'environnement (Railway)
 
