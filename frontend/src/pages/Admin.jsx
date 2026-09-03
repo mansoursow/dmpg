@@ -36,54 +36,79 @@ const STATUS_STYLE = {
 
 const FOURNISSEURS = ['Shein','Amazon','Bershka','H&M','Zara','AliExpress','Shopfrc','Autre'];
 
+/** Tarif unique du service, en euros par kilo. */
+const TARIF_KG = 10;
+
 const LIBELLE_STATUT = Object.fromEntries(STATUS_OPTS.map(o => [o.value, o.label]));
 
 /* ── MESSAGES WHATSAPP ──
-   Les mêmes phrases que les notifications de l'application : le client
-   reçoit deux fois la même information, pas deux versions différentes. */
+   Sans emoji : selon le clavier et la version de WhatsApp, ils arrivent
+   parfois en losanges noirs chez le destinataire. Une phrase claire passe
+   partout. Le message dit où est le colis et renvoie vers l'espace client,
+   rien de plus : l'identifiant GP ne sert qu'aux commandes, pas ici. */
+
+/** Où en est le colis, formulé pour tenir après « Votre colis … ». */
 const PHRASE_STATUT = {
-  attente:      'Votre colis est bien enregistré, nous l\'attendons à notre dépôt de Paris ⏳',
-  'recu-paris': 'Votre colis est arrivé à notre dépôt de Paris ✅',
-  transit:      'Votre colis est en route vers Dakar 🚢',
-  dakar:        'Votre colis est arrivé à Dakar 🇸🇳',
-  livre:        'Votre colis a été livré 🎉',
+  attente:      'est bien enregistré, nous l\'attendons à notre dépôt de Paris',
+  'recu-paris': 'est arrivé à notre dépôt de Paris',
+  transit:      'a quitté Paris, il est en route vers Dakar',
+  dakar:        'est arrivé à Dakar',
+  livre:        'vous a été livré',
 };
+
+/** La même information, en énumération, pour un point sur plusieurs colis. */
+const PHRASE_COURTE = {
+  attente:      'en attente à Paris',
+  'recu-paris': 'arrivé à Paris',
+  transit:      'en route vers Dakar',
+  dakar:        'arrivé à Dakar',
+  livre:        'livré',
+};
+
+/** L'espace client, sur le domaine d'où l'admin travaille. */
+const lienEspace = () => window.location.origin;
 
 /** Message prêt à envoyer pour un colis précis. */
 function messageColis(c) {
-  const lignes = [
-    `Bonjour ${c.prenom} 👋`,
+  const quoi = c.fournisseur ? `votre colis ${c.fournisseur}` : 'votre colis';
+  return [
+    `Bonjour ${c.prenom},`,
     '',
-    `Mise à jour de votre colis ${c.ref}${c.fournisseur ? ` (${c.fournisseur})` : ''} :`,
-    PHRASE_STATUT[c.status] || LIBELLE_STATUT[c.status] || '',
-  ];
-  if (c.tracking_num) lignes.push(`N° de suivi : ${c.tracking_num}`);
-  lignes.push('', `Suivi en direct : ${urlSuivi(c.ref)}`, '', '— DMgp Logistique');
-  return lignes.join('\n');
+    `${quoi.charAt(0).toUpperCase() + quoi.slice(1)} (${c.ref}) ` +
+      `${PHRASE_STATUT[c.status] || 'a changé de statut'}.`,
+    '',
+    `Connectez-vous à votre espace pour voir le détail et la photo : ${lienEspace()}`,
+    '',
+    'À bientôt,',
+    'DMgp Logistique',
+  ].join('\n');
 }
 
 /** Point complet sur les colis d'un client, quand il y en a plusieurs. */
 function messageClient(client, siens) {
-  const lignes = [`Bonjour ${client.prenom} 👋`, ''];
+  const lignes = [`Bonjour ${client.prenom},`, ''];
 
   if (!siens.length) {
     lignes.push(
-      'Nous n\'avons encore aucun colis déclaré à votre nom.',
-      'Pensez à déclarer chaque commande dès l\'achat dans votre espace DMgp,',
-      `en indiquant votre identifiant ${client.gp_id}.`
+      'Nous n\'avons encore aucun colis enregistré à votre nom.',
+      '',
+      `Pensez à déclarer chaque commande dès l'achat depuis votre espace : ${lienEspace()}`
     );
   } else {
-    // Les colis livrés n'appellent plus d'action : on ne les liste que
-    // si le client n'a rien d'autre en cours.
+    // Les colis livrés n'appellent plus rien : on ne les liste que si le
+    // client n'a aucun colis en cours.
     const encours = siens.filter(c => c.status !== 'livre');
-    lignes.push('Point sur vos colis chez DMgp :');
-    (encours.length ? encours : siens).forEach(c => lignes.push(
-      `• ${c.ref}${c.fournisseur ? ` (${c.fournisseur})` : ''} — ${LIBELLE_STATUT[c.status] || c.status}`
+    const aLister = encours.length ? encours : siens;
+
+    lignes.push(aLister.length > 1 ? 'Voici où en sont vos colis :' : 'Voici où en est votre colis :');
+    aLister.forEach(c => lignes.push(
+      `- ${c.fournisseur ? `${c.fournisseur} (${c.ref})` : c.ref} : ` +
+      `${PHRASE_COURTE[c.status] || c.status}`
     ));
-    lignes.push('', `Votre identifiant : ${client.gp_id}`);
+    lignes.push('', `Connectez-vous à votre espace pour le détail et les photos : ${lienEspace()}`);
   }
 
-  lignes.push('', '— DMgp Logistique');
+  lignes.push('', 'À bientôt,', 'DMgp Logistique');
   return lignes.join('\n');
 }
 
@@ -159,6 +184,17 @@ export default function Admin() {
     });
   }
 
+  /** Le paiement ne se marque qu'une fois le colis remis : le backend le refuse avant. */
+  async function togglePaiement(c) {
+    try {
+      const { data } = await api.patch(`/admin/colis/${c.id}/paiement`, { paye: !c.paye });
+      toast(data.colis.paye ? 'Colis marqué payé' : 'Colis marqué non payé', 'success');
+      load();
+    } catch (e) {
+      toast(e.response?.data?.error || 'Erreur', 'error');
+    }
+  }
+
   async function deleteColis(id) {
     if (!confirm('Supprimer ce colis ?')) return;
     await api.delete(`/admin/colis/${id}`);
@@ -192,8 +228,13 @@ export default function Admin() {
   }
 
   function exportCSV() {
-    const rows = [['Ref','Client','GP-ID','Fournisseur','Suivi','Statut','Date']];
-    colis.forEach(c => rows.push([c.ref, `${c.prenom} ${c.nom}`, c.gp_id, c.fournisseur||'', c.tracking_num||'', c.status, c.declared_at]));
+    const rows = [['Ref','Client','GP-ID','Fournisseur','Suivi','Statut','Poids (kg)','Montant (EUR)','Paiement','Date']];
+    colis.forEach(c => rows.push([
+      c.ref, `${c.prenom} ${c.nom}`, c.gp_id, c.fournisseur||'', c.tracking_num||'', c.status,
+      c.poids ?? '', c.poids ? (c.poids * TARIF_KG).toFixed(0) : '',
+      c.status === 'livre' ? (c.paye ? 'paye' : 'non paye') : '',
+      c.declared_at,
+    ]));
     const csv = rows.map(r => r.map(v=>`"${v}"`).join(',')).join('\n');
     const a = document.createElement('a'); a.href='data:text/csv;charset=utf-8,﻿'+encodeURIComponent(csv); a.download='dmgp-colis.csv'; a.click();
   }
@@ -244,7 +285,7 @@ export default function Admin() {
           ) : (
             <>
               {view === 'dashboard' && <ViewDashboard stats={stats} colis={colis} updateStatus={updateStatus} openQR={openQR}/>}
-              {view === 'colis'     && <ViewColis colis={colis} search={search} setSearch={setSearch} statusFilter={statusFilter} setStatusFilter={setStatusFilter} load={load} updateStatus={updateStatus} deleteColis={deleteColis} openQR={openQR} exportCSV={exportCSV} onNouveau={() => nouveauColis()} onEditer={setFiche} onPhoto={setPhotoVue} onPrevenir={prevenirColis}/>}
+              {view === 'colis'     && <ViewColis colis={colis} search={search} setSearch={setSearch} statusFilter={statusFilter} setStatusFilter={setStatusFilter} load={load} updateStatus={updateStatus} deleteColis={deleteColis} openQR={openQR} exportCSV={exportCSV} onNouveau={() => nouveauColis()} onEditer={setFiche} onPhoto={setPhotoVue} onPrevenir={prevenirColis} onPaiement={togglePaiement}/>}
               {view === 'clients'   && <ViewClients clients={clients} colis={colis} deleteClient={deleteClient} onNouveauColis={nouveauColis} onVoirColis={voirColisClient} onPrevenir={prevenirClient}/>}
               {view === 'notifs'    && <ViewNotifs notifs={notifs}/>}
             </>
@@ -294,6 +335,38 @@ export default function Admin() {
         </div>
       )}
     </div>
+  );
+}
+
+/**
+ * Bascule payé / non payé.
+ *
+ * Tant que le colis n'est pas remis, il n'y a rien à encaisser et le poids
+ * final n'est pas connu : la case reste inerte, et le backend refuserait
+ * de toute façon la bascule.
+ */
+function Paiement({ colis, onBasculer }) {
+  if (colis.status !== 'livre') {
+    return (
+      <span style={{fontSize:14,color:'var(--text-light)'}} title="Possible une fois le colis livré">
+        —
+      </span>
+    );
+  }
+  const paye = Boolean(colis.paye);
+  return (
+    <button
+      onClick={() => onBasculer(colis)}
+      title={paye ? 'Marquer comme non payé' : 'Marquer comme payé'}
+      style={{
+        border:'none', borderRadius:20, padding:'5px 12px', cursor:'pointer',
+        fontSize:15, fontWeight:600, fontFamily:'inherit',
+        background: paye ? '#dcfce7' : '#fee2e2',
+        color:      paye ? '#15803d' : '#b91c1c',
+      }}
+    >
+      {paye ? 'Payé' : 'Non payé'}
+    </button>
   );
 }
 
@@ -588,7 +661,7 @@ function ViewDashboard({ stats, colis, updateStatus, openQR }) {
 }
 
 /* ── COLIS VIEW ── */
-function ViewColis({ colis, search, setSearch, statusFilter, setStatusFilter, load, updateStatus, deleteColis, openQR, exportCSV, onNouveau, onEditer, onPhoto, onPrevenir }) {
+function ViewColis({ colis, search, setSearch, statusFilter, setStatusFilter, load, updateStatus, deleteColis, openQR, exportCSV, onNouveau, onEditer, onPhoto, onPrevenir, onPaiement }) {
   const filtered = colis.filter(c => {
     const q = search.toLowerCase();
     return (!q || (`${c.prenom} ${c.nom} ${c.ref} ${c.tracking_num||''} ${c.gp_id}`).toLowerCase().includes(q))
@@ -611,10 +684,10 @@ function ViewColis({ colis, search, setSearch, statusFilter, setStatusFilter, lo
       </div>
       <div className="tbl-wrap">
         <table>
-          <thead><tr><th>Photo</th><th>Réf</th><th>Client</th><th>Fournisseur</th><th>N° Suivi</th><th>Statut</th><th>Date</th><th>Actions</th></tr></thead>
+          <thead><tr><th>Photo</th><th>Réf</th><th>Client</th><th>Fournisseur</th><th>N° Suivi</th><th>Statut</th><th>Paiement</th><th>Date</th><th>Actions</th></tr></thead>
           <tbody>
             {filtered.length === 0
-              ? <tr><td colSpan={8} style={{textAlign:'center',padding:40,color:'var(--text-light)'}}>Aucun colis trouvé</td></tr>
+              ? <tr><td colSpan={9} style={{textAlign:'center',padding:40,color:'var(--text-light)'}}>Aucun colis trouvé</td></tr>
               : filtered.map(c => {
                   const ss = STATUS_STYLE[c.status] || STATUS_STYLE.attente;
                   return (
@@ -637,6 +710,7 @@ function ViewColis({ colis, search, setSearch, statusFilter, setStatusFilter, lo
                           {STATUS_OPTS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                         </select>
                       </td>
+                      <td><Paiement colis={c} onBasculer={onPaiement}/></td>
                       <td style={{fontSize:15,color:'var(--text-light)'}}>{c.declared_at?.slice(0,10)}</td>
                       <td>
                         <div style={{display:'flex',gap:6}}>

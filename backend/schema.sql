@@ -47,6 +47,12 @@ CREATE TABLE IF NOT EXISTS colis (
   delivered_at  TIMESTAMPTZ
 );
 
+-- Paiement, marqué par l'équipe une fois le colis remis. Colonnes ajoutées
+-- après coup : en ALTER idempotent, comme ancien_gp_id, pour que les bases
+-- déjà en service se mettent à jour toutes seules au démarrage.
+ALTER TABLE colis ADD COLUMN IF NOT EXISTS paye    BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE colis ADD COLUMN IF NOT EXISTS paye_at TIMESTAMPTZ;
+
 CREATE TABLE IF NOT EXISTS notifications (
   id          SERIAL PRIMARY KEY,
   client_id   INTEGER     NOT NULL REFERENCES users(id) ON DELETE CASCADE,

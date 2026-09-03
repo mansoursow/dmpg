@@ -220,6 +220,37 @@ router.patch('/colis/:id/status', async (req, res, next) => {
   } catch (e) { next(e); }
 });
 
+/**
+ * PATCH /api/admin/colis/:id/paiement — marquer un colis payé ou non.
+ *
+ * Réservé à l'équipe : c'est elle qui encaisse, elle seule peut donc
+ * l'attester. Et seulement une fois le colis remis — avant la livraison,
+ * il n'y a rien à encaisser et le poids final n'est pas connu.
+ */
+router.patch('/colis/:id/paiement', async (req, res, next) => {
+  try {
+    const paye = Boolean(req.body.paye);
+    const id = parseInt(req.params.id, 10);
+
+    const c = await db.row(`SELECT * FROM colis WHERE id = $1`, [id]);
+    if (!c) return res.status(404).json({ error: 'Colis introuvable' });
+    if (c.status !== 'livre') {
+      return res.status(409).json({
+        error: 'Le paiement ne se marque qu\'une fois le colis livré.',
+      });
+    }
+
+    const maj_c = await db.row(
+      `UPDATE colis SET paye = $1, paye_at = ${paye ? 'now()' : 'NULL'}
+       WHERE id = $2 RETURNING *`,
+      [paye, id]
+    );
+    if (paye) await notifier(maj_c, `Le paiement de votre colis ${maj_c.ref} est enregistré. Merci !`);
+
+    res.json({ ok: true, colis: normaliser(maj_c) });
+  } catch (e) { next(e); }
+});
+
 // GET /api/admin/clients
 router.get('/clients', async (_req, res, next) => {
   try {

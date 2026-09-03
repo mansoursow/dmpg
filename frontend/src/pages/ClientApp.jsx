@@ -34,6 +34,9 @@ const STATUS = {
 
 const FOURNISSEURS = ['Shein','Amazon','Bershka','H&M','Zara','AliExpress','Shopfrc','Autre'];
 
+/** Tarif unique du service, en euros par kilo. */
+const TARIF_KG = 10;
+
 const DEPOT = {
   'Complément':  'Magasin Mr Diop',
   'Adresse':     '14 Boulevard de la Chapelle',
@@ -447,6 +450,17 @@ function ExpeditionPanel({ colis, onRefresh }) {
     return hay.includes(q.toLowerCase());
   });
 
+  // Estimation, pas facture : le poids déclaré par le client vaut ce qu'il
+  // vaut, seule la pesée à Paris fait foi. Les colis pas encore pesés sont
+  // comptés à part plutôt qu'ignorés en silence.
+  const totaux = colis.reduce((acc, c) => {
+    const montant = c.poids ? c.poids * TARIF_KG : 0;
+    acc.estime += montant;
+    if (!c.poids) acc.sansPoids++;
+    if (c.status === 'livre' && !c.paye) acc.aRegler += montant;
+    return acc;
+  }, { estime: 0, aRegler: 0, sansPoids: 0 });
+
   async function showQR(c) {
     setQrColis(c);
     // Une URL, pas du texte : un scan ouvre directement la fiche de suivi.
@@ -499,12 +513,13 @@ function ExpeditionPanel({ colis, onRefresh }) {
               <th>N° Tracking</th>
               <th><span className={styles.thSort}>Statut <ChevronDown size={15}/></span></th>
               <th><span className={styles.thSort}>Estimation (€) <ChevronDown size={15}/></span></th>
+              <th>Paiement</th>
               <th></th>
             </tr>
           </thead>
           <tbody>
             {filtered.length === 0 ? (
-              <tr><td colSpan={4} className={styles.emptyCell}>Aucun élément trouvé.</td></tr>
+              <tr><td colSpan={5} className={styles.emptyCell}>Aucun élément trouvé.</td></tr>
             ) : filtered.map(c => {
               const s = STATUS[c.status] || STATUS.attente;
               return (
@@ -521,7 +536,19 @@ function ExpeditionPanel({ colis, onRefresh }) {
                     </div>
                   </td>
                   <td><span className="pill" style={{ background: s.bg, color: s.color }}>{s.label}</span></td>
-                  <td>{c.poids ? `${(c.poids * 10).toFixed(0)} €` : '—'}</td>
+                  <td>{c.poids ? `${(c.poids * TARIF_KG).toFixed(0)} €` : '—'}</td>
+                  <td>
+                    {/* Le paiement ne se règle qu'à la remise du colis :
+                        avant, la colonne n'a rien à annoncer. */}
+                    {c.status === 'livre'
+                      ? <span className="pill" style={{
+                          background: c.paye ? '#DFF6E9' : '#FFE4E4',
+                          color:      c.paye ? '#12855A' : '#B91C1C',
+                        }}>
+                          {c.paye ? 'Payé' : 'À régler'}
+                        </span>
+                      : <span style={{ color: 'var(--muted)' }}>—</span>}
+                  </td>
                   <td>
                     <div className={styles.rowActions}>
                       <button className={styles.rowBtn} onClick={() => showQR(c)}
@@ -549,6 +576,32 @@ function ExpeditionPanel({ colis, onRefresh }) {
           </tbody>
         </table>
       </div>
+
+      {colis.length > 0 && (
+        <div className={styles.totaux}>
+          <div className={styles.totalBloc}>
+            <div className={styles.totalLabel}>Total estimé</div>
+            <div className={styles.totalValeur}>environ {totaux.estime.toFixed(0)} €</div>
+          </div>
+          {totaux.aRegler > 0 && (
+            <div className={styles.totalBloc}>
+              <div className={styles.totalLabel}>Reste à régler</div>
+              <div className={`${styles.totalValeur} ${styles.totalDu}`}>
+                {totaux.aRegler.toFixed(0)} €
+              </div>
+            </div>
+          )}
+          <p className={styles.totalNote}>
+            Estimation au tarif de {TARIF_KG} € le kilo, à partir des poids que vous avez
+            indiqués. Le montant définitif est calculé à la pesée de vos colis à Paris
+            et peut donc changer.
+            {totaux.sansPoids > 0 && (
+              <> {totaux.sansPoids} colis sans poids renseigné {totaux.sansPoids > 1 ? 'ne sont' : 'n\'est'} pas
+              compté{totaux.sansPoids > 1 ? 's' : ''} dans ce total.</>
+            )}
+          </p>
+        </div>
+      )}
 
       {photoVue && (
         <div className="modal-overlay" onClick={() => setPhotoVue(null)}>
@@ -704,7 +757,7 @@ function ModifierColis({ colis, onFerme, onEnregistre }) {
                    onChange={e => set('poids', e.target.value)}/>
             {form.poids > 0 && (
               <p className={styles.champAide}>
-                Estimation : <strong style={{ color: 'var(--accent)' }}>{(form.poids * 10).toFixed(0)} €</strong>
+                Estimation : <strong style={{ color: 'var(--accent)' }}>{(form.poids * TARIF_KG).toFixed(0)} €</strong>
               </p>
             )}
           </div>
@@ -854,7 +907,7 @@ function DeclareView({ onSuccess, toast }) {
           />
           {form.poids > 0 && (
             <p style={{ fontSize: 16, color: 'var(--muted)', marginTop: 8 }}>
-              Estimation : <strong style={{ color: 'var(--accent)' }}>{(form.poids * 10).toFixed(0)} €</strong>
+              Estimation : <strong style={{ color: 'var(--accent)' }}>{(form.poids * TARIF_KG).toFixed(0)} €</strong>
             </p>
           )}
         </div>

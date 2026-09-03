@@ -431,3 +431,17 @@
   border: 1px dashed var(--warm-line); color: var(--muted);
   display: flex; align-items: center; justify-content: center;
 }
+
+/* Total estime des colis, sous le tableau des expeditions */
+.totaux {
+  display: flex; flex-wrap: wrap; gap: 28px 40px; align-items: flex-start;
+  margin-top: 18px; padding: 20px 22px;
+  background: var(--warm); border: 1px solid var(--warm-line); border-radius: 12px;
+}
+.totalBloc { min-width: 130px; }
+.totalLabel { font-size: 15px; color: var(--muted); margin-bottom: 4px; }
+.totalValeur { font-size: 26px; font-weight: 700; color: var(--ink); letter-spacing: -0.02em; }
+.totalDu { color: var(--accent); }
+.totalNote {
+  flex: 1 1 260px; font-size: 15px; line-height: 1.6; color: var(--muted); margin: 0;
+}
